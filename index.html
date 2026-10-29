@@ -204,6 +204,54 @@ const playBand = (noteLat, octave) => {
         catch (e) { }
     });
 };
+// Nota de bandoneón con duración controlada (para escuchar recorridos con una figura y una velocidad)
+const playBandDur = (noteLat, octave, dur, at = 0, dest = null) => {
+    const eng = LAT[noteLat] || noteLat, d = Math.max(0.08, dur);
+    [1, 2, 3].forEach((h, i) => {
+        try {
+            const ctx = getCtx();
+            if (!ctx)
+                return;
+            if (ctx.state === "suspended")
+                ctx.resume();
+            const midi = (noteIdx(eng) >= 0 ? 60 + noteIdx(eng) : 60) + (octave - 4) * 12;
+            const freq = 440 * Math.pow(2, (midi - 69) / 12) * h, t0 = ctx.currentTime + at, v = [0.22, 0.10, 0.05][i];
+            const osc = ctx.createOscillator(), gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(dest || ctx.destination);
+            osc.type = "sawtooth";
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, t0);
+            gain.gain.linearRampToValueAtTime(v, t0 + 0.015);
+            gain.gain.setValueAtTime(v * 0.85, t0 + Math.max(0.03, d - 0.05));
+            gain.gain.exponentialRampToValueAtTime(0.001, t0 + d + 0.04);
+            osc.start(t0);
+            osc.stop(t0 + d + 0.06);
+        }
+        catch (e) { }
+    });
+};
+// Clic de metrónomo (acento más agudo en el primer tiempo)
+const playClick = (at = 0, acc = false, dest = null) => {
+    try {
+        const ctx = getCtx();
+        if (!ctx)
+            return;
+        if (ctx.state === "suspended")
+            ctx.resume();
+        const t0 = ctx.currentTime + at, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "square";
+        o.frequency.value = acc ? 1700 : 1150;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(acc ? 0.32 : 0.2, t0 + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.05);
+        o.connect(g);
+        g.connect(dest || ctx.destination);
+        o.start(t0);
+        o.stop(t0 + 0.07);
+    }
+    catch (e) { }
+};
 const playChord = (notes) => notes.forEach((n, i) => setTimeout(() => playTone(n, 4, 1.2), i * 20));
 // ─── TEORÍA ───────────────────────────────────────────────────────────────────
 const FORMULAS = {
@@ -952,234 +1000,234 @@ function buildOctMaps(leftBtns, rightBtns) {
 // Tablas estáticas de fallback (valores del layout de referencia)
 // Se usan solo si los botones no tienen oct_abre/oct_cierra
 // ─── OCTAVAS REALES POR BOTÓN (fuente: Rheinische 142, layout de referencia) ─────
-// Octavas según el CSV de referencia (2026-10-06). Notación científica: Do4 = Do central.
+// Octavas según el CSV de referencia (2026-10-27). Notación científica: Do4 = Do central.
 const FALLBACK_OCT_R_OPEN = {
-    "R01": 5,
-    "R02": 5,
-    "R03": 5,
-    "R04": 5,
-    "R05": 5,
-    "R06": 5,
-    "R07": 5,
-    "R08": 3,
-    "R09": 5,
-    "R10": 3,
-    "R11": 3,
-    "R12": 3,
-    "R13": 4,
-    "R14": 5,
-    "R15": 5,
-    "R16": 2,
-    "R17": 3,
-    "R18": 4,
-    "R19": 3,
-    "R20": 3,
-    "R21": 4,
-    "R22": 4,
-    "R23": 2,
-    "R24": 3,
-    "R25": 3,
-    "R26": 3,
-    "R27": 3,
-    "R28": 4,
-    "R29": 4,
-    "R30": 4,
-    "R31": 2,
-    "R32": 3,
-    "R33": 4,
-    "R34": 4,
-    "R35": 4,
-    "R36": 4,
-    "R37": 5,
-    "R38": 4
+    "R01": 6,
+    "R02": 6,
+    "R03": 6,
+    "R04": 6,
+    "R05": 6,
+    "R06": 6,
+    "R07": 6,
+    "R08": 4,
+    "R09": 6,
+    "R10": 4,
+    "R11": 4,
+    "R12": 4,
+    "R13": 5,
+    "R14": 6,
+    "R15": 6,
+    "R16": 3,
+    "R17": 4,
+    "R18": 5,
+    "R19": 4,
+    "R20": 4,
+    "R21": 5,
+    "R22": 5,
+    "R23": 3,
+    "R24": 4,
+    "R25": 4,
+    "R26": 4,
+    "R27": 4,
+    "R28": 5,
+    "R29": 5,
+    "R30": 5,
+    "R31": 3,
+    "R32": 4,
+    "R33": 5,
+    "R34": 5,
+    "R35": 5,
+    "R36": 5,
+    "R37": 6,
+    "R38": 5
 };
 const FALLBACK_OCT_R_CLOSE = {
-    "R01": 5,
-    "R02": 5,
-    "R03": 5,
-    "R04": 5,
-    "R05": 5,
-    "R06": 5,
-    "R07": 5,
-    "R08": 3,
-    "R09": 5,
-    "R10": 3,
-    "R11": 3,
-    "R12": 3,
-    "R13": 3,
-    "R14": 3,
-    "R15": 5,
-    "R16": 2,
-    "R17": 3,
-    "R18": 4,
-    "R19": 3,
-    "R20": 3,
-    "R21": 4,
-    "R22": 4,
-    "R23": 2,
-    "R24": 3,
-    "R25": 3,
-    "R26": 3,
-    "R27": 4,
-    "R28": 4,
-    "R29": 4,
-    "R30": 4,
-    "R31": 2,
-    "R32": 3,
-    "R33": 4,
-    "R34": 4,
-    "R35": 4,
-    "R36": 4,
-    "R37": 5,
-    "R38": 4
+    "R01": 6,
+    "R02": 6,
+    "R03": 6,
+    "R04": 6,
+    "R05": 6,
+    "R06": 6,
+    "R07": 6,
+    "R08": 4,
+    "R09": 6,
+    "R10": 4,
+    "R11": 4,
+    "R12": 4,
+    "R13": 4,
+    "R14": 5,
+    "R15": 6,
+    "R16": 3,
+    "R17": 4,
+    "R18": 5,
+    "R19": 4,
+    "R20": 4,
+    "R21": 5,
+    "R22": 5,
+    "R23": 3,
+    "R24": 4,
+    "R25": 4,
+    "R26": 4,
+    "R27": 5,
+    "R28": 5,
+    "R29": 5,
+    "R30": 5,
+    "R31": 3,
+    "R32": 4,
+    "R33": 5,
+    "R34": 5,
+    "R35": 5,
+    "R36": 5,
+    "R37": 6,
+    "R38": 5
 };
 const FALLBACK_OCT_L_OPEN = {
-    "L01": 1,
-    "L02": 1,
-    "L03": 1,
-    "L04": 2,
-    "L05": 3,
-    "L06": 1,
-    "L07": 1,
-    "L08": 2,
-    "L09": 2,
-    "L10": 3,
-    "L11": 2,
-    "L12": 1,
-    "L13": 2,
-    "L14": 2,
-    "L15": 3,
-    "L16": 3,
-    "L17": 2,
-    "L18": 1,
-    "L19": 2,
-    "L20": 2,
-    "L21": 2,
-    "L22": 3,
-    "L23": 3,
-    "L24": 3,
-    "L25": 1,
-    "L26": 1,
-    "L27": 1,
-    "L28": 3,
-    "L29": 3,
-    "L30": 3,
-    "L31": 2,
-    "L32": 1,
-    "L33": 1
-};
-const FALLBACK_OCT_L_CLOSE = {
-    "L01": 1,
-    "L02": 1,
-    "L03": 2,
+    "L01": 2,
+    "L02": 2,
+    "L03": 3,
     "L04": 3,
-    "L05": 3,
-    "L06": 1,
+    "L05": 4,
+    "L06": 2,
     "L07": 2,
-    "L08": 2,
+    "L08": 3,
     "L09": 3,
-    "L10": 2,
-    "L11": 2,
-    "L12": 1,
-    "L13": 1,
-    "L14": 2,
-    "L15": 2,
-    "L16": 3,
+    "L10": 4,
+    "L11": 3,
+    "L12": 2,
+    "L13": 3,
+    "L14": 3,
+    "L15": 4,
+    "L16": 4,
     "L17": 3,
     "L18": 2,
-    "L19": 1,
-    "L20": 2,
-    "L21": 2,
-    "L22": 3,
-    "L23": 3,
-    "L24": 2,
-    "L25": 1,
-    "L26": 1,
+    "L19": 3,
+    "L20": 3,
+    "L21": 3,
+    "L22": 4,
+    "L23": 4,
+    "L24": 4,
+    "L25": 2,
+    "L26": 2,
     "L27": 2,
-    "L28": 3,
-    "L29": 3,
-    "L30": 3,
-    "L31": 2,
-    "L32": 1,
-    "L33": 1
+    "L28": 4,
+    "L29": 4,
+    "L30": 4,
+    "L31": 3,
+    "L32": 2,
+    "L33": 2
+};
+const FALLBACK_OCT_L_CLOSE = {
+    "L01": 2,
+    "L02": 2,
+    "L03": 3,
+    "L04": 4,
+    "L05": 4,
+    "L06": 2,
+    "L07": 3,
+    "L08": 3,
+    "L09": 4,
+    "L10": 3,
+    "L11": 3,
+    "L12": 2,
+    "L13": 2,
+    "L14": 3,
+    "L15": 3,
+    "L16": 4,
+    "L17": 4,
+    "L18": 3,
+    "L19": 2,
+    "L20": 3,
+    "L21": 3,
+    "L22": 4,
+    "L23": 4,
+    "L24": 3,
+    "L25": 2,
+    "L26": 2,
+    "L27": 3,
+    "L28": 4,
+    "L29": 4,
+    "L30": 4,
+    "L31": 3,
+    "L32": 2,
+    "L33": 2
 };
 // ─── STORAGE DE CONFIGURACIÓN ────────────────────────────────────────────────
 const STORAGE_KEY_L = "bandoneon_left_v1";
 const STORAGE_KEY_R = "bandoneon_right_v1";
 const DEFS_L = [
-    { id: "L01", row: 0, x: 208, y: 46, abre: "SOL#", cierra: "SOL#", color_abre: "#ff6a00", color_cierra: "#ff6a00", oct_abre: 1, oct_cierra: 1 },
-    { id: "L02", row: 0, x: 308, y: 40, abre: "LA#", cierra: "LA#", color_abre: "#e63b7a", color_cierra: "#e63b7a", oct_abre: 1, oct_cierra: 1 },
-    { id: "L03", row: 0, x: 416, y: 42, abre: "DO#", cierra: "RE#", color_abre: "#01c7fc", color_cierra: "#84cc16", oct_abre: 1, oct_cierra: 2 },
-    { id: "L04", row: 0, x: 526, y: 58, abre: "FA", cierra: "RE#", color_abre: "#d38301", color_cierra: "#84cc16", oct_abre: 2, oct_cierra: 3 },
-    { id: "L05", row: 0, x: 640, y: 78, abre: "SOL#", cierra: "SOL", color_abre: "#ff6a00", color_cierra: "#fefb41", oct_abre: 3, oct_cierra: 3 },
-    { id: "L06", row: 1, x: 64, y: 126, abre: "MI", cierra: "RE", color_abre: "#583300", color_cierra: "#587934", oct_abre: 1, oct_cierra: 1 },
-    { id: "L07", row: 1, x: 162, y: 106, abre: "LA", cierra: "RE", color_abre: "#a62c17", color_cierra: "#587934", oct_abre: 1, oct_cierra: 2 },
-    { id: "L08", row: 1, x: 258, y: 96, abre: "SOL", cierra: "LA#", color_abre: "#faf600", color_cierra: "#e63b7a", oct_abre: 2, oct_cierra: 2 },
-    { id: "L09", row: 1, x: 358, y: 98, abre: "RE#", cierra: "DO", color_abre: "#84cc16", color_cierra: "#285ff4", oct_abre: 2, oct_cierra: 3 },
-    { id: "L10", row: 1, x: 472, y: 108, abre: "FA", cierra: "DO#", color_abre: "#d38301", color_cierra: "#01c7fc", oct_abre: 3, oct_cierra: 2 },
-    { id: "L11", row: 1, x: 576, y: 108, abre: "LA#", cierra: "DO", color_abre: "#e63b7a", color_cierra: "#285ff4", oct_abre: 2, oct_cierra: 2 },
-    { id: "L12", row: 1, x: 680, y: 142, abre: "FA", cierra: "FA#", color_abre: "#d38301", color_cierra: "#feb43f", oct_abre: 1, oct_cierra: 1 },
-    { id: "L13", row: 2, x: 110, y: 172, abre: "RE", cierra: "SOL", color_abre: "#587934", color_cierra: "#fefb41", oct_abre: 2, oct_cierra: 1 },
-    { id: "L14", row: 2, x: 210, y: 156, abre: "LA", cierra: "SOL", color_abre: "#a62c17", color_cierra: "#fefb41", oct_abre: 2, oct_cierra: 2 },
-    { id: "L15", row: 2, x: 302, y: 154, abre: "DO", cierra: "SI", color_abre: "#285ff4", color_cierra: "#5e30eb", oct_abre: 3, oct_cierra: 2 },
-    { id: "L16", row: 2, x: 410, y: 162, abre: "MI", cierra: "RE", color_abre: "#583300", color_cierra: "#587934", oct_abre: 3, oct_cierra: 3 },
-    { id: "L17", row: 2, x: 528, y: 164, abre: "DO", cierra: "FA", color_abre: "#285ff4", color_cierra: "#d38301", oct_abre: 2, oct_cierra: 3 },
-    { id: "L18", row: 2, x: 618, y: 170, abre: "SOL", cierra: "FA#", color_abre: "#fffb00", color_cierra: "#feb43f", oct_abre: 1, oct_cierra: 2 },
-    { id: "L19", row: 3, x: 66, y: 252, abre: "MI", cierra: "LA", color_abre: "#583300", color_cierra: "#a62c17", oct_abre: 2, oct_cierra: 1 },
-    { id: "L20", row: 3, x: 158, y: 230, abre: "SOL#", cierra: "MI", color_abre: "#ff6a00", color_cierra: "#583300", oct_abre: 2, oct_cierra: 2 },
-    { id: "L21", row: 3, x: 254, y: 222, abre: "SI", cierra: "LA", color_abre: "#5e30eb", color_cierra: "#a62c17", oct_abre: 2, oct_cierra: 2 },
-    { id: "L22", row: 3, x: 354, y: 218, abre: "RE", cierra: "DO#", color_abre: "#587934", color_cierra: "#01c7fc", oct_abre: 3, oct_cierra: 3 },
-    { id: "L23", row: 3, x: 458, y: 224, abre: "FA#", cierra: "MI", color_abre: "#feb43f", color_cierra: "#583300", oct_abre: 3, oct_cierra: 3 },
-    { id: "L24", row: 3, x: 560, y: 234, abre: "DO#", cierra: "SOL#", color_abre: "#00a1d8", color_cierra: "#ff6a00", oct_abre: 3, oct_cierra: 2 },
-    { id: "L25", row: 3, x: 646, y: 246, abre: "FA#", cierra: "SI", color_abre: "#feb43f", color_cierra: "#5e30eb", oct_abre: 1, oct_cierra: 1 },
-    { id: "L26", row: 4, x: 26, y: 328, abre: "RE", cierra: "MI", color_abre: "#587934", color_cierra: "#754400", oct_abre: 1, oct_cierra: 1 },
-    { id: "L27", row: 4, x: 110, y: 308, abre: "SI", cierra: "MI", color_abre: "#5e30eb", color_cierra: "#583300", oct_abre: 1, oct_cierra: 2 },
-    { id: "L28", row: 4, x: 204, y: 294, abre: "SOL", cierra: "FA#", color_abre: "#faf200", color_cierra: "#ecac22", oct_abre: 3, oct_cierra: 3 },
-    { id: "L29", row: 4, x: 298, y: 288, abre: "LA", cierra: "LA", color_abre: "#a62c17", color_cierra: "#a62c17", oct_abre: 3, oct_cierra: 3 },
-    { id: "L30", row: 4, x: 390, y: 286, abre: "RE#", cierra: "SI", color_abre: "#84cc16", color_cierra: "#5e30eb", oct_abre: 3, oct_cierra: 3 },
-    { id: "L31", row: 4, x: 496, y: 296, abre: "FA#", cierra: "FA", color_abre: "#fda821", color_cierra: "#d38301", oct_abre: 2, oct_cierra: 2 },
-    { id: "L32", row: 4, x: 590, y: 306, abre: "RE#", cierra: "DO#", color_abre: "#84cc16", color_cierra: "#01c7fc", oct_abre: 1, oct_cierra: 1 },
-    { id: "L33", row: 4, x: 670, y: 320, abre: "DO", cierra: "FA", color_abre: "#285ff4", color_cierra: "#d38301", oct_abre: 1, oct_cierra: 1 },
+    { id: "L01", row: 0, x: 208, y: 46, abre: "SOL#", cierra: "SOL#", color_abre: "#ff6a00", color_cierra: "#ff6a00", oct_abre: 2, oct_cierra: 2 },
+    { id: "L02", row: 0, x: 308, y: 40, abre: "LA#", cierra: "LA#", color_abre: "#e63b7a", color_cierra: "#e63b7a", oct_abre: 2, oct_cierra: 2 },
+    { id: "L03", row: 0, x: 416, y: 42, abre: "DO#", cierra: "RE#", color_abre: "#01c7fc", color_cierra: "#84cc16", oct_abre: 3, oct_cierra: 3 },
+    { id: "L04", row: 0, x: 526, y: 58, abre: "FA", cierra: "RE#", color_abre: "#d38301", color_cierra: "#84cc16", oct_abre: 3, oct_cierra: 4 },
+    { id: "L05", row: 0, x: 640, y: 78, abre: "SOL#", cierra: "SOL", color_abre: "#ff6a00", color_cierra: "#fefb41", oct_abre: 4, oct_cierra: 4 },
+    { id: "L06", row: 1, x: 64, y: 126, abre: "MI", cierra: "RE", color_abre: "#583300", color_cierra: "#587934", oct_abre: 2, oct_cierra: 2 },
+    { id: "L07", row: 1, x: 162, y: 106, abre: "LA", cierra: "RE", color_abre: "#a62c17", color_cierra: "#587934", oct_abre: 2, oct_cierra: 3 },
+    { id: "L08", row: 1, x: 258, y: 96, abre: "SOL", cierra: "LA#", color_abre: "#faf600", color_cierra: "#e63b7a", oct_abre: 3, oct_cierra: 3 },
+    { id: "L09", row: 1, x: 358, y: 98, abre: "RE#", cierra: "DO", color_abre: "#84cc16", color_cierra: "#285ff4", oct_abre: 3, oct_cierra: 4 },
+    { id: "L10", row: 1, x: 472, y: 108, abre: "FA", cierra: "DO#", color_abre: "#d38301", color_cierra: "#01c7fc", oct_abre: 4, oct_cierra: 3 },
+    { id: "L11", row: 1, x: 576, y: 108, abre: "LA#", cierra: "DO", color_abre: "#e63b7a", color_cierra: "#285ff4", oct_abre: 3, oct_cierra: 3 },
+    { id: "L12", row: 1, x: 680, y: 142, abre: "FA", cierra: "FA#", color_abre: "#d38301", color_cierra: "#feb43f", oct_abre: 2, oct_cierra: 2 },
+    { id: "L13", row: 2, x: 110, y: 172, abre: "RE", cierra: "SOL", color_abre: "#587934", color_cierra: "#fefb41", oct_abre: 3, oct_cierra: 2 },
+    { id: "L14", row: 2, x: 210, y: 156, abre: "LA", cierra: "SOL", color_abre: "#a62c17", color_cierra: "#fefb41", oct_abre: 3, oct_cierra: 3 },
+    { id: "L15", row: 2, x: 302, y: 154, abre: "DO", cierra: "SI", color_abre: "#285ff4", color_cierra: "#5e30eb", oct_abre: 4, oct_cierra: 3 },
+    { id: "L16", row: 2, x: 410, y: 162, abre: "MI", cierra: "RE", color_abre: "#583300", color_cierra: "#587934", oct_abre: 4, oct_cierra: 4 },
+    { id: "L17", row: 2, x: 528, y: 164, abre: "DO", cierra: "FA", color_abre: "#285ff4", color_cierra: "#d38301", oct_abre: 3, oct_cierra: 4 },
+    { id: "L18", row: 2, x: 618, y: 170, abre: "SOL", cierra: "FA#", color_abre: "#fffb00", color_cierra: "#feb43f", oct_abre: 2, oct_cierra: 3 },
+    { id: "L19", row: 3, x: 66, y: 252, abre: "MI", cierra: "LA", color_abre: "#583300", color_cierra: "#a62c17", oct_abre: 3, oct_cierra: 2 },
+    { id: "L20", row: 3, x: 158, y: 230, abre: "SOL#", cierra: "MI", color_abre: "#ff6a00", color_cierra: "#583300", oct_abre: 3, oct_cierra: 3 },
+    { id: "L21", row: 3, x: 254, y: 222, abre: "SI", cierra: "LA", color_abre: "#5e30eb", color_cierra: "#a62c17", oct_abre: 3, oct_cierra: 3 },
+    { id: "L22", row: 3, x: 354, y: 218, abre: "RE", cierra: "DO#", color_abre: "#587934", color_cierra: "#01c7fc", oct_abre: 4, oct_cierra: 4 },
+    { id: "L23", row: 3, x: 458, y: 224, abre: "FA#", cierra: "MI", color_abre: "#feb43f", color_cierra: "#583300", oct_abre: 4, oct_cierra: 4 },
+    { id: "L24", row: 3, x: 560, y: 234, abre: "DO#", cierra: "SOL#", color_abre: "#00a1d8", color_cierra: "#ff6a00", oct_abre: 4, oct_cierra: 3 },
+    { id: "L25", row: 3, x: 646, y: 246, abre: "FA#", cierra: "SI", color_abre: "#feb43f", color_cierra: "#5e30eb", oct_abre: 2, oct_cierra: 2 },
+    { id: "L26", row: 4, x: 26, y: 328, abre: "RE", cierra: "MI", color_abre: "#587934", color_cierra: "#754400", oct_abre: 2, oct_cierra: 2 },
+    { id: "L27", row: 4, x: 110, y: 308, abre: "SI", cierra: "MI", color_abre: "#5e30eb", color_cierra: "#583300", oct_abre: 2, oct_cierra: 3 },
+    { id: "L28", row: 4, x: 204, y: 294, abre: "SOL", cierra: "FA#", color_abre: "#faf200", color_cierra: "#ecac22", oct_abre: 4, oct_cierra: 4 },
+    { id: "L29", row: 4, x: 298, y: 288, abre: "LA", cierra: "LA", color_abre: "#a62c17", color_cierra: "#a62c17", oct_abre: 4, oct_cierra: 4 },
+    { id: "L30", row: 4, x: 390, y: 286, abre: "RE#", cierra: "SI", color_abre: "#84cc16", color_cierra: "#5e30eb", oct_abre: 4, oct_cierra: 4 },
+    { id: "L31", row: 4, x: 496, y: 296, abre: "FA#", cierra: "FA", color_abre: "#fda821", color_cierra: "#d38301", oct_abre: 3, oct_cierra: 3 },
+    { id: "L32", row: 4, x: 590, y: 306, abre: "RE#", cierra: "DO#", color_abre: "#84cc16", color_cierra: "#01c7fc", oct_abre: 2, oct_cierra: 2 },
+    { id: "L33", row: 4, x: 670, y: 320, abre: "DO", cierra: "FA", color_abre: "#285ff4", color_cierra: "#d38301", oct_abre: 2, oct_cierra: 2 },
 ];
 const DEFS_R = [
-    { id: "R01", row: 0, x: 174, y: 0, abre: "SI", cierra: "SI", color_abre: "#5e30eb", color_cierra: "#5e30eb", oct_abre: 5, oct_cierra: 5 },
-    { id: "R02", row: 0, x: 274, y: 0, abre: "SOL#", cierra: "SOL#", color_abre: "#ff6a00", color_cierra: "#ff6a00", oct_abre: 5, oct_cierra: 5 },
-    { id: "R03", row: 0, x: 376, y: 0, abre: "SOL", cierra: "FA#", color_abre: "#fefb41", color_cierra: "#ffc777", oct_abre: 5, oct_cierra: 5 },
-    { id: "R04", row: 0, x: 484, y: 0, abre: "FA", cierra: "FA", color_abre: "#a96800", color_cierra: "#a96800", oct_abre: 5, oct_cierra: 5 },
-    { id: "R05", row: 0, x: 220, y: 38, abre: "LA", cierra: "SOL", color_abre: "#a62c17", color_cierra: "#fefb41", oct_abre: 5, oct_cierra: 5 },
-    { id: "R06", row: 0, x: 326, y: 38, abre: "FA#", cierra: "LA#", color_abre: "#ffc777", color_cierra: "#e63b7a", oct_abre: 5, oct_cierra: 5 },
-    { id: "R07", row: 0, x: 432, y: 40, abre: "MI", cierra: "DO", color_abre: "#583300", color_cierra: "#285ff4", oct_abre: 5, oct_cierra: 5 },
-    { id: "R08", row: 1, x: 128, y: 46, abre: "DO#", cierra: "DO", color_abre: "#01c7fc", color_cierra: "#285ff4", oct_abre: 3, oct_cierra: 3 },
-    { id: "R09", row: 1, x: 528, y: 50, abre: "RE#", cierra: "RE#", color_abre: "#84cc16", color_cierra: "#84cc16", oct_abre: 5, oct_cierra: 5 },
-    { id: "R10", row: 1, x: 88, y: 104, abre: "DO", cierra: "RE", color_abre: "#285ff4", color_cierra: "#587934", oct_abre: 3, oct_cierra: 3 },
-    { id: "R11", row: 1, x: 178, y: 98, abre: "RE", cierra: "DO#", color_abre: "#587934", color_cierra: "#01c7fc", oct_abre: 3, oct_cierra: 3 },
-    { id: "R12", row: 1, x: 280, y: 86, abre: "SOL", cierra: "SOL#", color_abre: "#fefb41", color_cierra: "#ff6a00", oct_abre: 3, oct_cierra: 3 },
-    { id: "R13", row: 1, x: 388, y: 86, abre: "LA#", cierra: "LA#", color_abre: "#e63b7a", color_cierra: "#e63b7a", oct_abre: 4, oct_cierra: 3 },
-    { id: "R14", row: 1, x: 484, y: 94, abre: "DO", cierra: "DO", color_abre: "#285ff4", color_cierra: "#285ff4", oct_abre: 5, oct_cierra: 3 },
-    { id: "R15", row: 1, x: 572, y: 114, abre: "RE", cierra: "RE", color_abre: "#587934", color_cierra: "#587934", oct_abre: 5, oct_cierra: 5 },
-    { id: "R16", row: 2, x: 42, y: 188, abre: "SI", cierra: "SI", color_abre: "#5e30eb", color_cierra: "#6230eb", oct_abre: 2, oct_cierra: 2 },
-    { id: "R17", row: 2, x: 136, y: 168, abre: "MI", cierra: "FA#", color_abre: "#583300", color_cierra: "#ffc777", oct_abre: 3, oct_cierra: 3 },
-    { id: "R18", row: 2, x: 236, y: 156, abre: "DO#", cierra: "FA#", color_abre: "#01c7fc", color_cierra: "#ffc777", oct_abre: 4, oct_cierra: 4 },
-    { id: "R19", row: 2, x: 342, y: 148, abre: "FA#", cierra: "SOL", color_abre: "#ffc777", color_cierra: "#fefb41", oct_abre: 3, oct_cierra: 3 },
-    { id: "R20", row: 2, x: 436, y: 156, abre: "LA", cierra: "SI", color_abre: "#a62c17", color_cierra: "#5e30eb", oct_abre: 3, oct_cierra: 3 },
-    { id: "R21", row: 2, x: 530, y: 164, abre: "DO", cierra: "RE", color_abre: "#285ff4", color_cierra: "#587934", oct_abre: 4, oct_cierra: 4 },
-    { id: "R22", row: 2, x: 612, y: 184, abre: "MI", cierra: "SOL", color_abre: "#583300", color_cierra: "#fefb41", oct_abre: 4, oct_cierra: 4 },
-    { id: "R23", row: 2, x: 0, y: 262, abre: "LA", cierra: "LA", color_abre: "#b51717", color_cierra: "#b51717", oct_abre: 2, oct_cierra: 2 },
-    { id: "R24", row: 2, x: 94, y: 246, abre: "FA", cierra: "FA", color_abre: "#a96800", color_cierra: "#a96800", oct_abre: 3, oct_cierra: 3 },
-    { id: "R25", row: 3, x: 188, y: 232, abre: "LA#", cierra: "MI", color_abre: "#e63b7a", color_cierra: "#583300", oct_abre: 3, oct_cierra: 3 },
-    { id: "R26", row: 3, x: 284, y: 224, abre: "SOL#", cierra: "LA", color_abre: "#ff6a00", color_cierra: "#a62c17", oct_abre: 3, oct_cierra: 3 },
-    { id: "R27", row: 3, x: 386, y: 224, abre: "SI", cierra: "DO#", color_abre: "#5e30eb", color_cierra: "#01c7fc", oct_abre: 3, oct_cierra: 4 },
-    { id: "R28", row: 3, x: 478, y: 232, abre: "RE", cierra: "MI", color_abre: "#587934", color_cierra: "#583300", oct_abre: 4, oct_cierra: 4 },
-    { id: "R29", row: 3, x: 570, y: 246, abre: "SOL#", cierra: "LA", color_abre: "#ff6a00", color_cierra: "#a62c17", oct_abre: 4, oct_cierra: 4 },
-    { id: "R30", row: 3, x: 654, y: 266, abre: "SI", cierra: "DO#", color_abre: "#5e30eb", color_cierra: "#01c7fc", oct_abre: 4, oct_cierra: 4 },
-    { id: "R31", row: 3, x: 26, y: 328, abre: "LA#", cierra: "LA#", color_abre: "#e63b7a", color_cierra: "#e63b7a", oct_abre: 2, oct_cierra: 2 },
-    { id: "R32", row: 3, x: 122, y: 312, abre: "RE#", cierra: "RE#", color_abre: "#84cc16", color_cierra: "#84cc16", oct_abre: 3, oct_cierra: 3 },
-    { id: "R33", row: 4, x: 220, y: 298, abre: "FA", cierra: "FA", color_abre: "#a96800", color_cierra: "#a96800", oct_abre: 4, oct_cierra: 4 },
-    { id: "R34", row: 4, x: 316, y: 296, abre: "RE#", cierra: "MI", color_abre: "#84cc16", color_cierra: "#583300", oct_abre: 4, oct_cierra: 4 },
-    { id: "R35", row: 4, x: 412, y: 300, abre: "FA#", cierra: "SOL#", color_abre: "#ffc777", color_cierra: "#ff6a00", oct_abre: 4, oct_cierra: 4 },
-    { id: "R36", row: 4, x: 500, y: 308, abre: "LA", cierra: "SI", color_abre: "#a62c17", color_cierra: "#5e30eb", oct_abre: 4, oct_cierra: 4 },
-    { id: "R37", row: 4, x: 594, y: 322, abre: "DO#", cierra: "MI", color_abre: "#01c7fc", color_cierra: "#583300", oct_abre: 5, oct_cierra: 5 },
-    { id: "R38", row: 4, x: 680, y: 346, abre: "SOL", cierra: "RE#", color_abre: "#fefb41", color_cierra: "#84cc16", oct_abre: 4, oct_cierra: 4 },
+    { id: "R01", row: 0, x: 174, y: 0, abre: "SI", cierra: "SI", color_abre: "#5e30eb", color_cierra: "#5e30eb", oct_abre: 6, oct_cierra: 6 },
+    { id: "R02", row: 0, x: 274, y: 0, abre: "SOL#", cierra: "SOL#", color_abre: "#ff6a00", color_cierra: "#ff6a00", oct_abre: 6, oct_cierra: 6 },
+    { id: "R03", row: 0, x: 376, y: 0, abre: "SOL", cierra: "FA#", color_abre: "#fefb41", color_cierra: "#ffc777", oct_abre: 6, oct_cierra: 6 },
+    { id: "R04", row: 0, x: 484, y: 0, abre: "FA", cierra: "FA", color_abre: "#a96800", color_cierra: "#a96800", oct_abre: 6, oct_cierra: 6 },
+    { id: "R05", row: 0, x: 220, y: 38, abre: "LA", cierra: "SOL", color_abre: "#a62c17", color_cierra: "#fefb41", oct_abre: 6, oct_cierra: 6 },
+    { id: "R06", row: 0, x: 326, y: 38, abre: "FA#", cierra: "LA#", color_abre: "#ffc777", color_cierra: "#e63b7a", oct_abre: 6, oct_cierra: 6 },
+    { id: "R07", row: 0, x: 432, y: 40, abre: "MI", cierra: "DO", color_abre: "#583300", color_cierra: "#285ff4", oct_abre: 6, oct_cierra: 6 },
+    { id: "R08", row: 1, x: 128, y: 46, abre: "DO#", cierra: "DO", color_abre: "#01c7fc", color_cierra: "#285ff4", oct_abre: 4, oct_cierra: 4 },
+    { id: "R09", row: 1, x: 528, y: 50, abre: "RE#", cierra: "RE#", color_abre: "#84cc16", color_cierra: "#84cc16", oct_abre: 6, oct_cierra: 6 },
+    { id: "R10", row: 1, x: 88, y: 104, abre: "DO", cierra: "RE", color_abre: "#285ff4", color_cierra: "#587934", oct_abre: 4, oct_cierra: 4 },
+    { id: "R11", row: 1, x: 178, y: 98, abre: "RE", cierra: "DO#", color_abre: "#587934", color_cierra: "#01c7fc", oct_abre: 4, oct_cierra: 4 },
+    { id: "R12", row: 1, x: 280, y: 86, abre: "SOL", cierra: "SOL#", color_abre: "#fefb41", color_cierra: "#ff6a00", oct_abre: 4, oct_cierra: 4 },
+    { id: "R13", row: 1, x: 388, y: 86, abre: "LA#", cierra: "LA#", color_abre: "#e63b7a", color_cierra: "#e63b7a", oct_abre: 5, oct_cierra: 4 },
+    { id: "R14", row: 1, x: 484, y: 94, abre: "DO", cierra: "DO", color_abre: "#285ff4", color_cierra: "#285ff4", oct_abre: 6, oct_cierra: 5 },
+    { id: "R15", row: 1, x: 572, y: 114, abre: "RE", cierra: "RE", color_abre: "#587934", color_cierra: "#587934", oct_abre: 6, oct_cierra: 6 },
+    { id: "R16", row: 2, x: 42, y: 188, abre: "SI", cierra: "SI", color_abre: "#5e30eb", color_cierra: "#6230eb", oct_abre: 3, oct_cierra: 3 },
+    { id: "R17", row: 2, x: 136, y: 168, abre: "MI", cierra: "FA#", color_abre: "#583300", color_cierra: "#ffc777", oct_abre: 4, oct_cierra: 4 },
+    { id: "R18", row: 2, x: 236, y: 156, abre: "DO#", cierra: "FA#", color_abre: "#01c7fc", color_cierra: "#ffc777", oct_abre: 5, oct_cierra: 5 },
+    { id: "R19", row: 2, x: 342, y: 148, abre: "FA#", cierra: "SOL", color_abre: "#ffc777", color_cierra: "#fefb41", oct_abre: 4, oct_cierra: 4 },
+    { id: "R20", row: 2, x: 436, y: 156, abre: "LA", cierra: "SI", color_abre: "#a62c17", color_cierra: "#5e30eb", oct_abre: 4, oct_cierra: 4 },
+    { id: "R21", row: 2, x: 530, y: 164, abre: "DO", cierra: "RE", color_abre: "#285ff4", color_cierra: "#587934", oct_abre: 5, oct_cierra: 5 },
+    { id: "R22", row: 2, x: 612, y: 184, abre: "MI", cierra: "SOL", color_abre: "#583300", color_cierra: "#fefb41", oct_abre: 5, oct_cierra: 5 },
+    { id: "R23", row: 2, x: 0, y: 262, abre: "LA", cierra: "LA", color_abre: "#b51717", color_cierra: "#b51717", oct_abre: 3, oct_cierra: 3 },
+    { id: "R24", row: 2, x: 94, y: 246, abre: "FA", cierra: "FA", color_abre: "#a96800", color_cierra: "#a96800", oct_abre: 4, oct_cierra: 4 },
+    { id: "R25", row: 3, x: 188, y: 232, abre: "LA#", cierra: "MI", color_abre: "#e63b7a", color_cierra: "#583300", oct_abre: 4, oct_cierra: 4 },
+    { id: "R26", row: 3, x: 284, y: 224, abre: "SOL#", cierra: "LA", color_abre: "#ff6a00", color_cierra: "#a62c17", oct_abre: 4, oct_cierra: 4 },
+    { id: "R27", row: 3, x: 386, y: 224, abre: "SI", cierra: "DO#", color_abre: "#5e30eb", color_cierra: "#01c7fc", oct_abre: 4, oct_cierra: 5 },
+    { id: "R28", row: 3, x: 478, y: 232, abre: "RE", cierra: "MI", color_abre: "#587934", color_cierra: "#583300", oct_abre: 5, oct_cierra: 5 },
+    { id: "R29", row: 3, x: 570, y: 246, abre: "SOL#", cierra: "LA", color_abre: "#ff6a00", color_cierra: "#a62c17", oct_abre: 5, oct_cierra: 5 },
+    { id: "R30", row: 3, x: 654, y: 266, abre: "SI", cierra: "DO#", color_abre: "#5e30eb", color_cierra: "#01c7fc", oct_abre: 5, oct_cierra: 5 },
+    { id: "R31", row: 3, x: 26, y: 328, abre: "LA#", cierra: "LA#", color_abre: "#e63b7a", color_cierra: "#e63b7a", oct_abre: 3, oct_cierra: 3 },
+    { id: "R32", row: 3, x: 122, y: 312, abre: "RE#", cierra: "RE#", color_abre: "#84cc16", color_cierra: "#84cc16", oct_abre: 4, oct_cierra: 4 },
+    { id: "R33", row: 4, x: 220, y: 298, abre: "FA", cierra: "FA", color_abre: "#a96800", color_cierra: "#a96800", oct_abre: 5, oct_cierra: 5 },
+    { id: "R34", row: 4, x: 316, y: 296, abre: "RE#", cierra: "MI", color_abre: "#84cc16", color_cierra: "#583300", oct_abre: 5, oct_cierra: 5 },
+    { id: "R35", row: 4, x: 412, y: 300, abre: "FA#", cierra: "SOL#", color_abre: "#ffc777", color_cierra: "#ff6a00", oct_abre: 5, oct_cierra: 5 },
+    { id: "R36", row: 4, x: 500, y: 308, abre: "LA", cierra: "SI", color_abre: "#a62c17", color_cierra: "#5e30eb", oct_abre: 5, oct_cierra: 5 },
+    { id: "R37", row: 4, x: 594, y: 322, abre: "DO#", cierra: "MI", color_abre: "#01c7fc", color_cierra: "#583300", oct_abre: 6, oct_cierra: 6 },
+    { id: "R38", row: 4, x: 680, y: 346, abre: "SOL", cierra: "RE#", color_abre: "#fefb41", color_cierra: "#84cc16", oct_abre: 5, oct_cierra: 5 },
 ];
 function loadBtns() {
     try {
@@ -1388,7 +1436,7 @@ function ArmadorAcordes({ a, collapsible = true, children }) {
             React.createElement("div", { style: { borderTop: `1px solid ${UI.line}`, paddingTop: 10 } },
                 React.createElement("div", { className: "flex items-center justify-between gap-2 flex-wrap mb-2" },
                     React.createElement("p", { style: { fontSize: 14, fontFamily: "'Libre Baskerville',serif", fontWeight: 700, color: UI.text } }, a.name),
-                    React.createElement("button", { onClick: () => tocarAcordeBand(a), style: { padding: "6px 14px", borderRadius: 9, border: `1px solid ${UI.text}`, background: "transparent", color: UI.text, fontWeight: 700, fontSize: 11, cursor: "pointer", fontFamily: "monospace" } }, "\u25B6 Tocar acorde")),
+                    React.createElement("button", { onClick: () => tocarAcordeBand(a), style: uiPill(true, { padding: "7px 14px" }) }, "\u25B6 Tocar acorde")),
                 React.createElement("div", { className: "flex gap-1.5 mb-2 items-center" },
                     React.createElement("span", { style: { fontSize: 10, letterSpacing: "0.14em", color: UI.mute, textTransform: "uppercase", marginRight: 4 } }, "Funci\u00F3n"),
                     React.createElement("button", { style: pill(a.romano), onClick: () => a.setRomano(true) }, "I \u00B7 III \u00B7 V"),
@@ -1510,7 +1558,8 @@ function DisponibilidadAcorde({ tones, leftBtns, rightBtns, bellows, voz }) {
                 ". Prob\u00E1 el otro sentido del fuelle, la otra mano u otra inversi\u00F3n."),
             React.createElement("div", { className: "flex flex-wrap gap-1.5 items-center" },
                 React.createElement("button", { style: uiPill(false, { padding: "6px 14px", borderColor: "#ececec", color: "#ececec" }), onClick: () => voz.res.notas.forEach((n, i) => setTimeout(() => playBand(CHROMATIC[n.pc], n.oct), i * 45)) }, "\u25B6 Tocar este voicing"),
-                React.createElement("button", { style: uiPill(voz.solo, { padding: "6px 14px" }), onClick: () => voz.setSolo(!voz.solo) }, voz.solo ? "Mostrando solo estas teclas" : "Resaltar solo estas teclas")),
+                React.createElement("button", { style: uiPill(voz.solo, { padding: "6px 14px" }), onClick: () => voz.setSolo(!voz.solo) }, voz.solo ? "Mostrando solo estas teclas" : "Resaltar solo estas teclas"),
+                voz.onMarcar && voz.res.notas.length > 0 && React.createElement("button", { style: uiPill(false, { padding: "6px 14px" }), onClick: voz.onMarcar, title: "Pasa estas notas a Notas marcadas, para escucharlas y modificarlas sobre el teclado" }, "\u25CE Marcar estas teclas")),
             React.createElement("p", { style: { fontSize: 10.5, color: "#6a6a70", margin: "8px 0 0", lineHeight: 1.5 } }, voz.mano === "izq" ? "Mano izquierda: el bajo es la fundamental más grave; la séptima va justo encima y el resto del acorde desde el Do3. Ejemplo: La menor = La1 (bajo) + Do3 + Mi3; con séptima, Sol2 entre el bajo y el Do3."
                 : "Mano derecha: las notas del acorde de abajo hacia arriba desde el Do3. Cada inversión pone una nota distinta en la base.")))));
 }
@@ -1575,11 +1624,14 @@ function useDisposicion() {
 }
 // Con ambos teclados y modo "lado a lado", los dos usan la misma escala y llenan todo el ancho.
 function calcAnchos(wrapWidth, L, R, ambas, lado, isMobile) {
-    if (ambas && lado && !isMobile) {
-        const gap = 14, WL = anchoMano(L), WR = anchoMano(R), k = (wrapWidth - gap) / (WL + WR);
+    const gap = 14, WL = anchoMano(L), WR = anchoMano(R), k = (wrapWidth - gap) / (WL + WR);
+    if (ambas && lado && !isMobile)
         return { fila: true, gap, aL: Math.floor(WL * k), aR: Math.floor(WR * k) };
-    }
-    return { fila: false, gap: 18, aL: wrapWidth, aR: wrapWidth };
+    if (isMobile)
+        return { fila: false, gap: 18, aL: wrapWidth, aR: wrapWidth };
+    // Apilados (o una sola mano): apenas más grandes que lado a lado, sin ocupar todo el ancho
+    const f = 1.15;
+    return { fila: false, gap: 18, aL: Math.min(wrapWidth, Math.floor(WL * k * f)), aR: Math.min(wrapWidth, Math.floor(WR * k * f)) };
 }
 function ControlesDisposicion({ d, isMobile }) {
     const on = (v) => uiPill(v, { padding: "5px 11px" });
@@ -1589,7 +1641,7 @@ function ControlesDisposicion({ d, isMobile }) {
         (isMobile || !d.lado) && React.createElement("button", { style: on(d.invertir), onClick: () => d.setInvertir(!d.invertir), title: "Apilados: derecha arriba e izquierda abajo" }, "\u21C5 Derecha arriba"),
         React.createElement("button", { style: on(d.full), onClick: d.toggleFull, title: "Usa toda la pantalla" }, d.full ? "⛶ Salir" : "⛶ Pantalla completa")));
 }
-function BandBtn({ btn, bellows, pressed, isHeard, onDown, onUp, draggable = false, onMove, oct = null, chordActive = false, chordLabel = null }) {
+function BandBtn({ btn, bellows, pressed, isHeard, onDown, onUp, draggable = false, onMove, oct = null, chordActive = false, chordLabel = null, markLabel = null }) {
     const note = bellows === "abre" ? btn.abre : btn.cierra;
     const color = draggable ? (bellows === "abre" ? btn.color_abre : btn.color_cierra) : nc(LAT[note] || note); // paleta real de las notas
     const isOn = pressed.includes(btn.id);
@@ -1638,7 +1690,10 @@ function BandBtn({ btn, bellows, pressed, isHeard, onDown, onUp, draggable = fal
             zIndex: isAct ? 20 : (chordLabel ? 15 : 1),
             opacity: chordActive && !chordLabel && !isAct ? 0.25 : 1,
             ...(chordLabel ? { background: `radial-gradient(circle at 36% 30%,${color}ff,${color}ee 55%,${color}bb)`, border: "3px solid #ffffff", boxShadow: `0 0 0 3px #ffffff55, 0 0 18px ${color}` } : {}),
+            ...(markLabel ? { zIndex: 18, opacity: 1, background: `radial-gradient(circle at 36% 30%,${color}ff,${color}ee 55%,${color}bb)`, border: "3px solid #ffffff", boxShadow: `0 0 0 2px #0b0b0c, 0 0 0 5px #ffffff, 0 0 16px ${color}` } : {}),
         } },
+        markLabel && (React.createElement("span", { style: { position: "absolute", bottom: -7, right: -7, minWidth: 18, height: 18, padding: "0 4px", borderRadius: 9, background: "#0b0b0c", color: "#fff", border: "1.5px solid #fff",
+                fontSize: 10, fontWeight: 800, fontFamily: "monospace", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4 } }, markLabel)),
         chordLabel && (React.createElement("span", { style: { position: "absolute", top: -6, right: -6, minWidth: 17, height: 17, padding: "0 3px", borderRadius: 9, background: "#fff", color: "#101010",
                 fontSize: 9, fontWeight: 800, fontFamily: "monospace", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3, boxShadow: "0 1px 4px rgba(0,0,0,.6)" } }, chordLabel)),
         React.createElement("div", { style: { position: "absolute", top: 5, left: 9, width: 11, height: 7, borderRadius: "50%", background: "rgba(255,255,255,.22)", filter: "blur(1px)", pointerEvents: "none" } }),
@@ -1680,7 +1735,7 @@ function MapaAlturas({ btns, bellows, titulo }) {
                     dup ? " · repetida" : "")));
         }))));
 }
-function BandCanvas({ buttons, bellows, pressed, heardIds = [], onDown, onUp, draggable = false, onMove, showGrid = false, onSelect = null, selected = null, octMap = null, maxWidth = null, maxScale = 1, chordMap = null, chordIds = null }) {
+function BandCanvas({ buttons, bellows, pressed, heardIds = [], onDown, onUp, draggable = false, onMove, showGrid = false, onSelect = null, selected = null, octMap = null, maxWidth = null, maxScale = 1, chordMap = null, chordIds = null, markIds = null }) {
     const W = Math.max(...buttons.map(b => b.x)) + BTN_SIZE + 16;
     const H = Math.max(...buttons.map(b => b.y)) + BTN_SIZE + 20;
     // Escalado con transform (estándar, soporta todos los navegadores —
@@ -1707,7 +1762,7 @@ function BandCanvas({ buttons, bellows, pressed, heardIds = [], onDown, onUp, dr
             borderRadius: 16,
             boxShadow: "0 8px 24px rgba(0,0,0,.7)",
             touchAction: "none",
-        } }, buttons.map(btn => (React.createElement(BandBtn, { key: btn.id, btn: btn, bellows: bellows, pressed: selected ? [selected] : pressed, isHeard: heardIds.includes(btn.id), onDown: e => { onSelect && onSelect(btn.id); onDown && onDown(btn); }, onUp: onUp, draggable: draggable, onMove: onMove, oct: octMap ? octMap[btn.id] : null, chordActive: !!(chordIds || chordMap), chordLabel: chordIds ? (chordIds[btn.id] || null) : (chordMap ? (chordMap[(() => { const n = bellows === "abre" ? btn.abre : btn.cierra; return LAT[n] || n; })()] || null) : null) })))));
+        } }, buttons.map(btn => (React.createElement(BandBtn, { key: btn.id, btn: btn, bellows: bellows, pressed: selected ? [selected] : pressed, isHeard: heardIds.includes(btn.id), onDown: e => { onSelect && onSelect(btn.id); onDown && onDown(btn); }, onUp: onUp, draggable: draggable, onMove: onMove, oct: octMap ? octMap[btn.id] : null, markLabel: markIds ? (markIds[btn.id] || null) : null, chordActive: !!(chordIds || chordMap), chordLabel: chordIds ? (chordIds[btn.id] || null) : (chordMap ? (chordMap[(() => { const n = bellows === "abre" ? btn.abre : btn.cierra; return LAT[n] || n; })()] || null) : null) })))));
     // Contenedor con el tamaño YA escalado, para que el layout reserve
     // exactamente ese espacio (el transform no cambia el tamaño en el flujo normal).
     if (maxWidth || scale < 1) {
@@ -1929,6 +1984,61 @@ function BandEditor({ initialLeft, initialRight, onSave, onCancel }) {
                         }))))))));
 }
 // ─── BANDONEÓN TAB PRINCIPAL ──────────────────────────────────────────────────
+// ─── NOTAS MARCADAS: nombre del acorde a partir de las notas marcadas ─────────
+const ACORDES_PLANTILLA = [
+    ["mayor", [0, 4, 7]], ["menor", [0, 3, 7]], ["disminuido", [0, 3, 6]], ["aumentado", [0, 4, 8]], ["sus2", [0, 2, 7]], ["sus4", [0, 5, 7]],
+    ["6", [0, 4, 7, 9]], ["m6", [0, 3, 7, 9]], ["7", [0, 4, 7, 10]], ["△7", [0, 4, 7, 11]], ["m7", [0, 3, 7, 10]], ["ø7", [0, 3, 6, 10]], ["°7", [0, 3, 6, 9]], ["m△7", [0, 3, 7, 11]], ["7sus4", [0, 5, 7, 10]],
+    ["add9", [0, 2, 4, 7]], ["m add9", [0, 2, 3, 7]], ["9", [0, 2, 4, 7, 10]], ["△9", [0, 2, 4, 7, 11]], ["m9", [0, 2, 3, 7, 10]],
+    ["7 (sin 5ª)", [0, 4, 10]], ["△7 (sin 5ª)", [0, 4, 11]], ["m7 (sin 5ª)", [0, 3, 10]], ["5 (sin 3ª)", [0, 7]],
+];
+const RAIZ_NOM = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+function nombreAcordePcs(pcs, bajoPc) {
+    const set = [...new Set(pcs)];
+    if (set.length < 2)
+        return null;
+    const orden = [bajoPc, ...set.filter(p => p !== bajoPc)];
+    for (const r of orden) {
+        const ivs = set.map(p => (p - r + 12) % 12).sort((a, b) => a - b);
+        const hit = ACORDES_PLANTILLA.find(([, t]) => t.length === ivs.length && t.every((v, i) => v === ivs[i]));
+        if (hit)
+            return nombreLat(RAIZ_NOM[r]) + " " + hit[0] + (r !== bajoPc ? " / " + nombreLat(RAIZ_NOM[bajoPc]) : "");
+    }
+    return null;
+}
+function PanelMarcadas({ marcadas, marcar, onRemove, onClear }) {
+    const orden = [...marcadas].sort((a, b) => a.midi - b.midi || a.orden - b.orden);
+    const nombre = (m) => nombreLat(RAIZ_NOM[m.pc]);
+    const acorde = orden.length >= 2 ? nombreAcordePcs(orden.map(m => m.pc), orden[0].pc) : null;
+    const tocar = (arp) => orden.forEach((m, i) => playBandDur(CHROMATIC[m.pc], m.oct, arp ? 0.38 : 1.8, arp ? i * 0.32 : i * 0.012));
+    return (React.createElement("div", { style: { background: "#121214", border: "1px solid #26262a", borderRadius: 12, padding: "12px 14px" } },
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 8 } },
+            React.createElement("p", { style: { ...uiLabel, margin: 0 } }, "\u25CE Notas marcadas"),
+            React.createElement("span", { style: { fontFamily: UI_FONT, fontSize: 11, color: marcar ? "#ececec" : "#7c7c82" } }, marcar ? "Marcar activo: tocá una tecla para agregarla o sacarla" : "Activá Marcar (arriba) para elegir notas sobre el teclado")),
+        orden.length === 0
+            ? React.createElement("p", { style: { fontFamily: UI_FONT, fontSize: 12, color: "#7c7c82", margin: "4px 0 2px", lineHeight: 1.5 } }, "Todav\u00EDa no marcaste ninguna nota. Marc\u00E1 varias teclas para armar un acorde y escucharlo completo.")
+            : React.createElement(React.Fragment, null,
+                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 10 } }, orden.map(m => {
+                    const col = nc(CHROMATIC[m.pc]);
+                    return (React.createElement("button", { key: m.id, onClick: () => onRemove(m.id), title: "Sacar esta nota", style: { display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px 4px 5px", borderRadius: 999, cursor: "pointer", background: "#0e0e10", border: "1px solid #2c2c30", color: "#ececec", fontFamily: UI_FONT } },
+                        React.createElement("span", { style: { width: 24, height: 24, borderRadius: "50%", background: col, color: txtSobre(col), display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, fontFamily: "monospace" } }, m.orden),
+                        React.createElement("span", { style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: 13 } },
+                            nombre(m),
+                            m.oct),
+                        React.createElement("span", { style: { fontSize: 9.5, color: "#7c7c82" } }, m.mano),
+                        React.createElement("span", { style: { fontSize: 12, color: "#8a8a90" } }, "\u2715")));
+                })),
+                React.createElement("p", { style: { fontFamily: UI_FONT, fontSize: 13, color: "#ececec", margin: "0 0 10px" } },
+                    React.createElement("span", { style: { ...uiLabel, marginRight: 8 } }, "Acorde"),
+                    React.createElement("b", { style: { fontFamily: "'Libre Baskerville',serif", fontSize: 16 } }, acorde || (orden.length < 2 ? "—" : "sin nombre conocido")))),
+        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } },
+            React.createElement("button", { disabled: !orden.length, style: uiPill(true, { padding: "7px 14px" }), onClick: () => tocar(false) }, "\u25B6 Escuchar acorde"),
+            React.createElement("button", { disabled: !orden.length, style: uiPill(false, { padding: "7px 14px" }), onClick: () => tocar(true) }, "\u25B6 Arpegio"),
+            React.createElement("button", { disabled: !orden.length, style: uiPill(false, { padding: "7px 14px", marginLeft: "auto" }), onClick: onClear }, "\u27F3 Limpiar"))));
+}
+const segS = { display: "flex", background: "#121214", border: "1px solid #2c2c30", borderRadius: 10, padding: 3, gap: 2 };
+function GrupoCtl({ t, children }) { return (React.createElement("div", null,
+    React.createElement("p", { style: { ...uiLabel, fontSize: 9, letterSpacing: "0.16em", margin: "0 0 4px 2px" } }, t),
+    children)); }
 function BandoneonTab() {
     const [leftBtns, setLeftBtns] = useState([]);
     const [rightBtns, setRightBtns] = useState([]);
@@ -2195,22 +2305,50 @@ function BandoneonTab() {
     }, [stopNote]);
     // Corta todo lo que esté sonando si el componente se desmonta
     useEffect(() => () => stopAllNotes(), [stopAllNotes]);
+    // ─── MARCAR: elegir notas sobre el teclado para armar un acorde ───────────
+    const [marcar, setMarcar] = useState(false);
+    const [marks, setMarks] = useState({ abre: [], cierra: [] });
+    const marksB = marks[bellows];
+    const toggleMark = useCallback((btn) => {
+        setMarks(m => { const cur = m[bellows]; return { ...m, [bellows]: cur.includes(btn.id) ? cur.filter(x => x !== btn.id) : [...cur, btn.id] }; });
+    }, [bellows]);
+    const quitarMark = useCallback((id) => setMarks(m => ({ ...m, [bellows]: m[bellows].filter(x => x !== id) })), [bellows]);
+    const marcadas = useMemo(() => {
+        const all = [...leftBtns, ...rightBtns];
+        return marksB.map((id, k) => {
+            const b = all.find(x => x.id === id);
+            if (!b)
+                return null;
+            const lat = bellows === "abre" ? b.abre : b.cierra, pc = noteIdxB(LAT[lat] || lat), oct = getOct(b, bellows);
+            return { id, orden: k + 1, pc, oct, midi: 12 * (oct + 1) + pc, mano: id.startsWith("L") ? "Izq." : "Der." };
+        }).filter(x => x && x.pc >= 0);
+    }, [marksB, bellows, leftBtns, rightBtns, getOct]);
+    const markIds = useMemo(() => marksB.length ? Object.fromEntries(marksB.map((id, k) => [id, k + 1])) : null, [marksB]);
+    const marcarTecla = (btn) => { const note = bellows === "abre" ? btn.abre : btn.cierra; playBandDur(note, getOct(btn, bellows), 0.6); toggleMark(btn); };
     const downL = useCallback((btn) => {
+        if (marcar) {
+            marcarTecla(btn);
+            return;
+        }
         const oct = getOct(btn, bellows);
         const note = bellows === 'abre' ? btn.abre : btn.cierra;
         startNote(btn.id, LAT[note] || note, oct);
         setPressedL(p => [...new Set([...p, btn.id])]);
-    }, [bellows, getOct, startNote]);
+    }, [bellows, getOct, startNote, marcar, toggleMark]);
     const upL = useCallback((id) => {
         stopNote(id);
         setPressedL(p => p.filter(x => x !== id));
     }, [stopNote]);
     const downR = useCallback((btn) => {
+        if (marcar) {
+            marcarTecla(btn);
+            return;
+        }
         const oct = getOct(btn, bellows);
         const note = bellows === 'abre' ? btn.abre : btn.cierra;
         startNote(btn.id, LAT[note] || note, oct);
         setPressedR(p => [...new Set([...p, btn.id])]);
-    }, [bellows, getOct, startNote]);
+    }, [bellows, getOct, startNote, marcar, toggleMark]);
     const upR = useCallback((id) => {
         stopNote(id);
         setPressedR(p => p.filter(x => x !== id));
@@ -2259,77 +2397,47 @@ function BandoneonTab() {
         return React.createElement("div", { style: { color: "#555", padding: 20, fontSize: 13 } }, "Cargando...");
     if (editMode)
         return (React.createElement(BandEditor, { initialLeft: leftBtns, initialRight: rightBtns, onSave: handleSave, onCancel: () => setEditMode(false) }));
+    const cardS = { background: "#121214", border: "1px solid #26262a", borderRadius: 12, padding: "12px 14px" };
+    const vozProp = { mano: vozMano, setMano: setVozMano, inv: vozInv, setInv: setVozInv, solo: vozSolo, setSolo: setVozSolo, res: vozRes,
+        onMarcar: () => setMarks(m => ({ ...m, [bellows]: vozRes.notas.map(n => n.b) })) };
     return (React.createElement("div", { style: { fontFamily: UI_FONT } },
-        React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 14, padding: "8px 12px", background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 10 } },
-            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, flex: "1 1 auto" } },
-                React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: fromStorage ? "#e6e6e6" : "#8a8a8a" } }),
-                React.createElement("span", { style: { fontSize: 10, color: fromStorage ? "#e6e6e6" : "#8a8a8a", fontFamily: "monospace" } }, fromStorage ? "Config. personalizada" : "Config. por defecto")),
-            !window.__ALUMNO && React.createElement("button", { onClick: () => { stopAllNotes(); setIsListening(false); setEditMode(true); }, style: { padding: "5px 13px", borderRadius: 9, border: "1px solid #e6e6e6", background: "#1a1a1a", color: "#e6e6e6", fontWeight: 700, fontSize: 11, cursor: "pointer", fontFamily: "monospace" } }, "\u270F\uFE0F Editar teclado"),
-            !window.__ALUMNO && React.createElement("button", { onClick: () => setShowImport(true), style: { padding: "5px 13px", borderRadius: 9, border: "1px solid #e6e6e644", background: "transparent", color: "#e6e6e6", fontWeight: 700, fontSize: 11, cursor: "pointer", fontFamily: "monospace" } }, "\u2191 Importar CSV"),
-            !window.__ALUMNO && fromStorage && (React.createElement("button", { onClick: () => { clearBtns(); const { left, right } = loadBtns(); setLeftBtns(left); setRightBtns(right); setFromStorage(false); }, style: { padding: "5px 10px", borderRadius: 9, border: "1px solid #2a2a2a",
-                    background: "transparent", color: "#8a8a8a", fontSize: 10, cursor: "pointer", fontFamily: "monospace" } }, "\u27F3 Defaults"))),
-        React.createElement("div", { style: { marginBottom: 10, padding: "8px 12px", background: "#121212", border: "1.5px dashed #e6e6e6", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, minHeight: 56 } },
-            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flex: "1 1 auto" } },
-                React.createElement("div", { style: { width: 9, height: 9, borderRadius: "50%", background: isListening ? "#e6e6e6" : "#232323", boxShadow: isListening ? "0 0 8px #e6e6e6" : "none", flexShrink: 0 } }),
-                React.createElement("div", null,
-                    React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "#e6e6e6" } }, "MODO ESCUCHA F\u00CDSICA"),
-                    React.createElement("div", { style: { fontSize: 8, color: "#8a8a8a" } }, "Toc\u00E1 tu instrumento. Los botones con esa nota brillan en blanco."))),
-            isListening && (React.createElement("div", { style: { background: "#121212", border: "1px solid #e6e6e644", padding: "3px 10px", borderRadius: 8, minWidth: 55, textAlign: "center" } },
-                React.createElement("span", { style: { fontSize: 8, color: "#8a8a8a", display: "block" } }, "NOTA MIC"),
-                React.createElement("span", { style: { fontSize: 13, fontWeight: 900, color: heardNote ? "#e6e6e6" : "#232323" } }, heardNote
-                    ? heardNote.replace(/(\d+)$/, "") + " " + (heardNote.match(/\d+$/) || [""])[0]
-                    : "..."))),
-            React.createElement("button", { onClick: () => { setIsListening(p => !p); setErrorAudio(""); }, style: {
-                    padding: "5px 12px", borderRadius: 9, border: "none",
-                    fontFamily: "monospace", fontWeight: 700, fontSize: 10, cursor: "pointer",
-                    background: isListening ? "linear-gradient(135deg,#b5564f,#b5564f)" : "#e6e6e6",
-                    color: isListening ? "#fff" : "#121212",
-                } }, isListening ? "✕ Apagar Mic" : "🎙️ Escuchar")),
-        errorAudio && React.createElement("div", { style: { marginBottom: 10, padding: "5px 10px", background: "#121212", border: "1px solid #b5564f55", borderRadius: 6, fontSize: 9, color: "#d98f88" } },
-            "\u26A0 ",
-            errorAudio),
-        React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10, alignItems: "center" } },
-            React.createElement("div", { style: { display: "flex", background: "#121212", border: "1.5px solid #2a2a2a", borderRadius: 10, padding: 3, gap: 2 } }, [["abre", "▷ Abre"], ["cierra", "◁ Cierra"]].map(([b, l]) => (React.createElement("button", { key: b, style: { ...pill(bellows === b), padding: isMobile ? "5px 10px" : "5px 12px" }, onClick: () => { stopAllNotes(); setBellows(b); setPressedL([]); setPressedR([]); } }, l)))),
-            React.createElement("div", { style: { display: "flex", background: "#121212", border: "1.5px solid #333333", borderRadius: 10, padding: 3, gap: 2 } }, [["ambas", "Ambas"], ["izquierda", "IZQ"], ["derecha", "DER"]].map(([v, l]) => (React.createElement("button", { key: v, style: { ...pill(view === v, "blue"), padding: isMobile ? "5px 8px" : "5px 12px" }, onClick: () => setView(v) }, l)))),
-            React.createElement(ControlesDisposicion, { d: disp, isMobile: isMobile }),
-            React.createElement("button", { onClick: () => { stopAllNotes(); setPressedL([]); setPressedR([]); }, style: { padding: "5px 9px", borderRadius: 9, border: "1px solid #2a2a2a", background: "transparent", color: "#8a8a8a", fontFamily: "monospace", fontSize: 10, cursor: "pointer", marginLeft: "auto" } }, "\u2715")),
-        React.createElement("div", { style: { minHeight: 44, marginBottom: 8 } }, (activeNotes.length > 0 || heardNote) && (React.createElement("div", { style: {
-                marginBottom: 10,
-                padding: isMobile ? "6px 10px" : "7px 12px",
-                background: "#121212",
-                border: "1px solid #333333",
-                borderRadius: 10,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 5,
-            } },
+        React.createElement("div", { style: { ...cardS, display: "flex", gap: "10px 18px", flexWrap: "wrap", alignItems: "flex-end", marginBottom: 12, padding: "10px 14px" } },
+            React.createElement(GrupoCtl, { t: "Fuelle" },
+                React.createElement("div", { style: segS }, [["abre", "▷ Abre"], ["cierra", "◁ Cierra"]].map(([b, l]) => (React.createElement("button", { key: b, style: { ...pill(bellows === b), padding: isMobile ? "5px 10px" : "5px 14px" }, onClick: () => { stopAllNotes(); setBellows(b); setPressedL([]); setPressedR([]); } }, l))))),
+            React.createElement(GrupoCtl, { t: "Teclado" },
+                React.createElement("div", { style: segS }, [["ambas", "Ambas"], ["izquierda", "Izq."], ["derecha", "Der."]].map(([v, l]) => (React.createElement("button", { key: v, style: { ...pill(view === v), padding: isMobile ? "5px 8px" : "5px 12px" }, onClick: () => setView(v) }, l))))),
+            React.createElement(GrupoCtl, { t: "Disposici\u00F3n" },
+                React.createElement(ControlesDisposicion, { d: disp, isMobile: isMobile })),
+            React.createElement(GrupoCtl, { t: "Marcar notas" },
+                React.createElement("div", { style: segS },
+                    React.createElement("button", { style: { ...pill(marcar), padding: "5px 14px" }, onClick: () => { stopAllNotes(); setPressedL([]); setPressedR([]); setMarcar(v => !v); }, title: "Con Marcar activo, tocar una tecla la agrega o la saca del acorde" },
+                        "\u25CE Marcar",
+                        marksB.length ? ` · ${marksB.length}` : ""))),
+            React.createElement("button", { onClick: () => { stopAllNotes(); setPressedL([]); setPressedR([]); }, title: "Soltar todas las teclas", style: { ...uiPill(false, { padding: "6px 12px" }), marginLeft: "auto" } }, "\u2715 Soltar")),
+        React.createElement("div", { style: { minHeight: 40, marginBottom: 6 } }, (activeNotes.length > 0 || heardNote) && (React.createElement("div", { style: { padding: isMobile ? "6px 10px" : "6px 12px", background: "#121214", border: "1px solid #26262a", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 5 } },
             React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap", flex: "1 1 auto" } },
                 heardNote && (React.createElement("span", { style: { padding: "2px 8px", borderRadius: 20, background: "#e6e6e622", border: "1px solid #e6e6e6", color: "#e6e6e6", fontWeight: 700, fontSize: isMobile ? 10 : 11 } },
                     "\uD83C\uDF99\uFE0F ",
                     heardNote)),
                 activeNotes.map(n => {
-                    const notaPura = n.replace(/\d+$/, ""); // "SOL3"→"SOL"
-                    const oct = (n.match(/\d+$/) || [""])[0]; // "SOL3"→"3"
+                    const notaPura = n.replace(/\d+$/, "");
+                    const oct = (n.match(/\d+$/) || [""])[0];
                     const engKey = LAT[notaPura] || notaPura;
                     return (React.createElement("span", { key: n, style: { padding: "2px 8px", borderRadius: 20, background: nc(engKey) + "22", border: `1px solid ${nc(engKey)}`, color: nc(engKey), fontWeight: 700, fontSize: isMobile ? 10 : 11 } },
                         notaPura,
                         React.createElement("span", { style: { fontSize: "0.75em", opacity: .7, marginLeft: 1 } }, oct)));
                 })),
             detected && (React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } },
-                React.createElement("div", { style: { fontSize: 8, color: "#555" } }, "Acorde"),
+                React.createElement("div", { style: { fontSize: 8, color: "#7c7c82" } }, "Acorde"),
                 React.createElement("div", { style: { fontSize: isMobile ? 17 : 20, fontWeight: 900, color: "#e6e6e6", fontFamily: "serif" } }, detected)))))),
-        React.createElement(ArmadorAcordes, { a: acorde },
-            React.createElement(DisponibilidadAcorde, { tones: acorde.tones, leftBtns: leftBtns, rightBtns: rightBtns, bellows: bellows, voz: { mano: vozMano, setMano: setVozMano, inv: vozInv, setInv: setVozInv, solo: vozSolo, setSolo: setVozSolo, res: vozRes } })),
         React.createElement("div", { ref: canvasWrapRef, style: {
                 display: "flex",
                 flexDirection: an.fila ? "row" : (disp.invertir ? "column-reverse" : "column"),
                 gap: an.gap,
-                alignItems: an.fila ? "flex-start" : "stretch",
+                alignItems: an.fila ? "flex-start" : "center",
                 paddingBottom: 8,
             } },
-            (view === "ambas" || view === "izquierda") && (React.createElement("div", { style: { width: an.fila ? an.aL : "100%", flexShrink: 0 } },
+            (view === "ambas" || view === "izquierda") && (React.createElement("div", { style: { width: an.aL, flexShrink: 0 } },
                 React.createElement("div", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 5, letterSpacing: "0.12em",
                         display: "flex", alignItems: "center", gap: 6 } },
                     React.createElement("span", null,
@@ -2337,27 +2445,46 @@ function BandoneonTab() {
                         leftBtns.length,
                         " botones"),
                     isMobile && React.createElement("span", { style: { opacity: .5, fontSize: 8 } }, "\u2191 abre / cierra \u2193")),
-                React.createElement(BandCanvas, { buttons: leftBtns, bellows: bellows, pressed: pressedL, heardIds: heardIdsL, onDown: downL, onUp: upL, mobile: isMobile, maxWidth: an.aL, maxScale: 3.6, chordMap: chordMap, chordIds: chordIds, octMap: bellows === "abre" ? OCT_L_OPEN : OCT_L_CLOSE }))),
-            (view === "ambas" || view === "derecha") && (React.createElement("div", { style: { width: an.fila ? an.aR : "100%", flexShrink: 0 } },
+                React.createElement(BandCanvas, { buttons: leftBtns, bellows: bellows, pressed: pressedL, heardIds: heardIdsL, onDown: downL, onUp: upL, mobile: isMobile, maxWidth: an.aL, maxScale: 3.6, chordMap: chordMap, chordIds: chordIds, markIds: markIds, octMap: bellows === "abre" ? OCT_L_OPEN : OCT_L_CLOSE }))),
+            (view === "ambas" || view === "derecha") && (React.createElement("div", { style: { width: an.aR, flexShrink: 0 } },
                 React.createElement("div", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 5, letterSpacing: "0.12em" } },
                     "MANO DERECHA \u00B7 ",
                     rightBtns.length,
                     " botones"),
-                React.createElement(BandCanvas, { buttons: rightBtns, bellows: bellows, pressed: pressedR, heardIds: heardIdsR, onDown: downR, onUp: upR, mobile: isMobile, maxWidth: an.aR, maxScale: 3.6, chordMap: chordMap, chordIds: chordIds, octMap: bellows === "abre" ? OCT_R_OPEN : OCT_R_CLOSE })))),
-        React.createElement("details", { style: { marginTop: 14, background: "#121214", border: "1px solid #26262a", borderRadius: 12, padding: "10px 14px" } },
-            React.createElement("summary", { style: { cursor: "pointer", fontFamily: UI_FONT, fontSize: 12, fontWeight: 600, color: "#cfcfd4", letterSpacing: "0.03em" } }, "Mapa de alturas \u00B7 octavas de cada tecla"),
-            React.createElement("div", { style: { marginTop: 12 } },
-                React.createElement("p", { style: { fontFamily: UI_FONT, fontSize: 11, color: "#7c7c82", lineHeight: 1.5, marginBottom: 12 } }, "Las octavas siguen la numeraci\u00F3n cient\u00EDfica (Do4 es el Do central). Toc\u00E1 una nota para o\u00EDrla. Si una altura aparece repetida en dos teclas se marca con borde punteado."),
-                React.createElement(MapaAlturas, { btns: leftBtns, bellows: bellows, titulo: "Mano izquierda" }),
-                React.createElement(MapaAlturas, { btns: rightBtns, bellows: bellows, titulo: "Mano derecha" }))),
-        React.createElement("div", { style: { marginTop: 10, padding: "7px 11px", background: "#121212", border: "1px solid #2a2a2a", borderRadius: 8, fontSize: 11, color: "#555" } },
-            React.createElement("b", { style: { color: "#8a8a8a" } }, "Sistema Rheinische"),
-            " \u00B7 71 botones \u00B7 Bisonoro: nota diferente al",
-            " ",
-            React.createElement("span", { style: { color: "#e6e6e6" } }, "abrir"),
-            " y al ",
-            React.createElement("span", { style: { color: "#e6e6e6" } }, "cerrar"),
-            " el fuelle."),
+                React.createElement(BandCanvas, { buttons: rightBtns, bellows: bellows, pressed: pressedR, heardIds: heardIdsR, onDown: downR, onUp: upR, mobile: isMobile, maxWidth: an.aR, maxScale: 3.6, chordMap: chordMap, chordIds: chordIds, markIds: markIds, octMap: bellows === "abre" ? OCT_R_OPEN : OCT_R_CLOSE })))),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: 12, alignItems: "start", marginTop: 8 } },
+            React.createElement("div", { style: { display: "grid", gap: 12 } },
+                React.createElement(PanelMarcadas, { marcadas: marcadas, marcar: marcar, onRemove: quitarMark, onClear: () => setMarks(m => ({ ...m, [bellows]: [] })) }),
+                React.createElement("div", { style: cardS },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" } },
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, minWidth: 0 } },
+                            React.createElement("div", { style: { width: 9, height: 9, borderRadius: "50%", background: isListening ? "#e6e6e6" : "#2c2c30", boxShadow: isListening ? "0 0 8px #e6e6e6" : "none", flexShrink: 0 } }),
+                            React.createElement("div", null,
+                                React.createElement("p", { style: { ...uiLabel, margin: 0 } }, "Escucha f\u00EDsica"),
+                                React.createElement("p", { style: { fontSize: 11, color: "#7c7c82", margin: "2px 0 0" } }, "Toc\u00E1 tu instrumento: las teclas con esa nota brillan en blanco."))),
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
+                            isListening && (React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: heardNote ? "#e6e6e6" : "#555", minWidth: 50, textAlign: "center" } }, heardNote ? heardNote.replace(/(\d+)$/, "") + " " + (heardNote.match(/\d+$/) || [""])[0] : "...")),
+                            React.createElement("button", { onClick: () => { setIsListening(p => !p); setErrorAudio(""); }, style: uiPill(isListening, { padding: "6px 14px" }) }, isListening ? "✕ Apagar mic" : "🎙️ Escuchar"))),
+                    errorAudio && React.createElement("p", { style: { margin: "8px 0 0", fontSize: 11, color: "#d98f88" } },
+                        "\u26A0 ",
+                        errorAudio)),
+                React.createElement("details", { style: cardS },
+                    React.createElement("summary", { style: { cursor: "pointer", fontFamily: UI_FONT, fontSize: 12, fontWeight: 600, color: "#cfcfd4", letterSpacing: "0.03em" } }, "Mapa de alturas \u00B7 octavas de cada tecla"),
+                    React.createElement("div", { style: { marginTop: 12 } },
+                        React.createElement("p", { style: { fontFamily: UI_FONT, fontSize: 11, color: "#7c7c82", lineHeight: 1.5, marginBottom: 12 } }, "Las octavas siguen la numeraci\u00F3n cient\u00EDfica (Do4 es el Do central). Toc\u00E1 una nota para o\u00EDrla. Si una altura aparece repetida en dos teclas se marca con borde punteado."),
+                        React.createElement(MapaAlturas, { btns: leftBtns, bellows: bellows, titulo: "Mano izquierda" }),
+                        React.createElement(MapaAlturas, { btns: rightBtns, bellows: bellows, titulo: "Mano derecha" })))),
+            React.createElement(ArmadorAcordes, { a: acorde },
+                React.createElement(DisponibilidadAcorde, { tones: acorde.tones, leftBtns: leftBtns, rightBtns: rightBtns, bellows: bellows, voz: vozProp }))),
+        React.createElement("div", { style: { ...cardS, marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", padding: "9px 14px" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flex: "1 1 auto" } },
+                React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: fromStorage ? "#e6e6e6" : "#8a8a8a" } }),
+                React.createElement("span", { style: { fontSize: 11, color: "#8a8a8a", fontFamily: UI_FONT } },
+                    fromStorage ? "Configuración personalizada del teclado" : "Configuración por defecto del teclado",
+                    " \u00B7 Sistema Rheinische, 71 botones, bisonoro")),
+            !window.__ALUMNO && React.createElement("button", { onClick: () => { stopAllNotes(); setIsListening(false); setEditMode(true); }, style: uiPill(false, { padding: "5px 13px" }) }, "\u270F\uFE0F Editar teclado"),
+            !window.__ALUMNO && React.createElement("button", { onClick: () => setShowImport(true), style: uiPill(false, { padding: "5px 13px" }) }, "\u2191 Importar CSV"),
+            !window.__ALUMNO && fromStorage && (React.createElement("button", { onClick: () => { clearBtns(); const { left, right } = loadBtns(); setLeftBtns(left); setRightBtns(right); setFromStorage(false); }, style: uiPill(false, { padding: "5px 12px" }) }, "\u27F3 Valores por defecto"))),
         showSaved && React.createElement(SavedModal, { cssText: cssText, onClose: () => setShowSaved(false) }),
         showImport && React.createElement(ImportModal, { onImport: handleImport, onClose: () => setShowImport(false) })));
 }
@@ -3030,7 +3157,7 @@ function HojaDeColor({ rect, actual, onPick, onErase, onClose }) {
 }
 // Teclado en blanco, escalado para entrar siempre en el ancho disponible
 // (misma técnica de transform:scale ya usada en BandCanvas).
-function PaintCanvas({ buttons, guesses, keyOf, checked, correctOf, onTapButton, maxWidth, maxScale = 3, activeId = null, chord = null, escala = null, rotulo = null }) {
+function PaintCanvas({ buttons, guesses, keyOf, checked, correctOf, onTapButton, maxWidth, maxScale = 3, activeId = null, chord = null, escala = null, rotulo = null, flechas = null, rotulos = null }) {
     const W = Math.max(...buttons.map(b => b.x)) + BTN_SIZE + 16;
     const H = Math.max(...buttons.map(b => b.y)) + BTN_SIZE + 20;
     const target = maxWidth || W;
@@ -3045,54 +3172,67 @@ function PaintCanvas({ buttons, guesses, keyOf, checked, correctOf, onTapButton,
                     background: "linear-gradient(145deg,#1d1d1d,#101010)",
                     border: "2px solid #3a3a3a", borderRadius: 16,
                     boxShadow: "0 8px 24px rgba(0,0,0,.7)",
-                } }, buttons.map(btn => {
-                let bg, borderCss, glow, content = null;
-                if (escala) {
-                    const st = escala.stateOf(btn);
-                    bg = st.bg;
-                    borderCss = st.border;
-                    glow = st.glow;
-                    content = st.content;
-                }
-                else if (chord) {
-                    const sel = chord.isSel(btn), lab = chord.labelOf(btn);
-                    const ok = checked && sel && lab, bad = checked && sel && !lab;
-                    const miss = checked && !sel && lab && chord.isMissed(btn);
-                    const verResp = chord.reveal && lab;
-                    bg = verResp ? correctOf(btn) : sel ? "#6a6a6a" : "#1a1a1a";
-                    borderCss = ok ? "3px solid #6b9c7c" : bad ? "3px solid #b5564f" : miss ? "3px dashed #ffffff"
-                        : (sel || verResp) ? "3px solid #ffffff" : "3px solid #555";
-                    glow = btn.id === activeId ? "0 0 0 4px #e6e6e6" : (ok ? "0 0 10px #6b9c7caa" : miss ? "0 0 10px #ffffff88" : "none");
-                    if (ok)
-                        content = React.createElement("span", { style: { fontSize: 14, color: "#fff", fontWeight: 800 } }, "\u2713");
-                    else if (bad)
-                        content = React.createElement("span", { style: { fontSize: 13, color: "#fff", fontWeight: 800 } }, "\u2715");
-                    else if (verResp || miss)
-                        content = React.createElement("span", { style: { fontSize: 12, color: miss ? "#fff" : txtSobre(bg), fontWeight: 800, fontFamily: "monospace" } }, lab);
-                }
-                else {
-                    const guess = guesses[keyOf(btn.id)];
-                    const correct = checked ? correctOf(btn) : null;
-                    const isRight = checked && guess && guess === correct;
-                    const isWrong = checked && guess && guess !== correct;
-                    bg = guess || "#1a1a1a";
-                    borderCss = `3px solid ${isRight ? "#6b9c7c" : isWrong ? "#b5564f" : guess ? "rgba(255,255,255,.5)" : "#555"}`;
-                    glow = btn.id === activeId ? "0 0 0 4px #e6e6e6" : (guess ? `0 0 10px ${guess}99` : "none");
-                    const etq = (checked && rotulo && guess) ? rotulo(btn) : null;
-                    const marca = (m, sz) => React.createElement("span", { style: { display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.05, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,.95)" } },
-                        React.createElement("span", { style: { fontSize: sz, fontWeight: 800 } }, m),
-                        etq ? React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, fontFamily: "monospace" } }, etq) : null);
-                    if (isRight)
-                        content = marca("✓", 13);
-                    if (isWrong)
-                        content = marca("✕", 12);
-                }
-                return (React.createElement("button", { key: btn.id, onClick: (e) => onTapButton(btn, e.currentTarget.getBoundingClientRect()), style: {
-                        position: "absolute", left: btn.x, top: btn.y, width: BTN_SIZE, height: BTN_SIZE, borderRadius: "50%",
-                        background: bg, border: borderCss, boxShadow: glow,
-                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                    } }, content));
-            })))));
+                } },
+                buttons.map(btn => {
+                    let bg, borderCss, glow, content = null;
+                    if (escala) {
+                        const st = escala.stateOf(btn);
+                        bg = st.bg;
+                        borderCss = st.border;
+                        glow = st.glow;
+                        content = st.content;
+                    }
+                    else if (chord) {
+                        const sel = chord.isSel(btn), lab = chord.labelOf(btn);
+                        const ok = checked && sel && lab, bad = checked && sel && !lab;
+                        const miss = checked && !sel && lab && chord.isMissed(btn);
+                        const verResp = chord.reveal && lab;
+                        bg = verResp ? correctOf(btn) : sel ? "#6a6a6a" : "#1a1a1a";
+                        borderCss = ok ? "3px solid #6b9c7c" : bad ? "3px solid #b5564f" : miss ? "3px dashed #ffffff"
+                            : (sel || verResp) ? "3px solid #ffffff" : "3px solid #555";
+                        glow = btn.id === activeId ? "0 0 0 4px #e6e6e6" : (ok ? "0 0 10px #6b9c7caa" : miss ? "0 0 10px #ffffff88" : "none");
+                        if (ok)
+                            content = React.createElement("span", { style: { fontSize: 14, color: "#fff", fontWeight: 800 } }, "\u2713");
+                        else if (bad)
+                            content = React.createElement("span", { style: { fontSize: 13, color: "#fff", fontWeight: 800 } }, "\u2715");
+                        else if (verResp || miss)
+                            content = React.createElement("span", { style: { fontSize: 12, color: miss ? "#fff" : txtSobre(bg), fontWeight: 800, fontFamily: "monospace" } }, lab);
+                    }
+                    else {
+                        const guess = guesses[keyOf(btn.id)];
+                        const correct = checked ? correctOf(btn) : null;
+                        const isRight = checked && guess && guess === correct;
+                        const isWrong = checked && guess && guess !== correct;
+                        bg = guess || "#1a1a1a";
+                        borderCss = `3px solid ${isRight ? "#6b9c7c" : isWrong ? "#b5564f" : guess ? "rgba(255,255,255,.5)" : "#555"}`;
+                        glow = btn.id === activeId ? "0 0 0 4px #e6e6e6" : (guess ? `0 0 10px ${guess}99` : "none");
+                        const etq = (checked && rotulo && guess) ? rotulo(btn) : null;
+                        const marca = (m, sz) => React.createElement("span", { style: { display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.05, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,.95)" } },
+                            React.createElement("span", { style: { fontSize: sz, fontWeight: 800 } }, m),
+                            etq ? React.createElement("span", { style: { fontSize: 8.5, fontWeight: 800, fontFamily: "monospace" } }, etq) : null);
+                        if (isRight)
+                            content = marca("✓", 13);
+                        if (isWrong)
+                            content = marca("✕", 12);
+                    }
+                    return (React.createElement("button", { key: btn.id, onClick: (e) => onTapButton(btn, e.currentTarget.getBoundingClientRect()), style: {
+                            position: "absolute", left: btn.x, top: btn.y, width: BTN_SIZE, height: BTN_SIZE, borderRadius: "50%",
+                            background: bg, border: borderCss, boxShadow: glow,
+                            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                        } }, content));
+                }),
+                flechas && flechas.length > 0 && (React.createElement("svg", { width: W, height: H, style: { position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" } },
+                    React.createElement("defs", null,
+                        React.createElement("marker", { id: "camflecha", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "4.2", markerHeight: "4.2", orient: "auto" },
+                            React.createElement("path", { d: "M0,0 L10,5 L0,10 z", fill: "#fff" }))),
+                    flechas.map((f, i) => {
+                        const dx = f.b.x - f.a.x, dy = f.b.y - f.a.y, d = Math.hypot(dx, dy) || 1, r = BTN_SIZE / 2 + 2;
+                        if (d <= 2 * r + 6)
+                            return null;
+                        return React.createElement("line", { key: i, x1: f.a.x + dx / d * r, y1: f.a.y + dy / d * r, x2: f.b.x - dx / d * (r + 1), y2: f.b.y - dy / d * (r + 1), stroke: "#fff", strokeOpacity: ".92", strokeWidth: "3", strokeLinecap: "round", strokeDasharray: f.dash ? "7 6" : undefined, markerEnd: "url(#camflecha)" });
+                    }))),
+                rotulos && rotulos.map((t, i) => (React.createElement("div", { key: "r" + i, style: { position: "absolute", left: t.x, top: t.y, transform: "translate(-50%,-100%)", pointerEvents: "none", background: "#000d", border: "1px solid #ffffff66", color: "#fff",
+                        fontSize: 9, fontWeight: 800, padding: "1px 6px", borderRadius: 8, whiteSpace: "nowrap", fontFamily: "monospace" } }, t.text)))))));
 }
 // ─── ESCALAS PARA EL ENTRENADOR ──────────────────────────────────────────────
 const ESC_ENT = [
@@ -3148,6 +3288,165 @@ function rutaEscala(btns, bellows, rootPc, ivs, dir, startIdx) {
     used = Math.min(used, tonics.length - 1);
     const r = build(tonics[used]);
     return { route: r.route, missing: r.missing, tonics, items, startUsed: used };
+}
+// ─── CAMINO DE LAS ESCALAS EN LOS DOS TECLADOS ────────────────────────────────
+const FIGURAS = [{ id: "redonda", nombre: "Redonda", beats: 4 }, { id: "blanca", nombre: "Blanca", beats: 2 }, { id: "negra", nombre: "Negra", beats: 1 }, { id: "corchea", nombre: "Corchea", beats: 0.5 }, { id: "semicorchea", nombre: "Semicorchea", beats: 0.25 }];
+// Camino de una lista de notas (objetivos por mano) para un sentido del fuelle. CADA MANO muestra su propio camino.
+// Si una mano no tiene una nota, queda sin marcar y se avisa. Dentro de una misma mano, si una nota está en dos botones,
+// se elige el más cercano a la nota anterior y el otro se ofrece como alternativa.
+function caminoNotas(leftBtns, rightBtns, bellows, objL, objR, elige) {
+    const dist = (a, b) => Math.hypot(a.b.x - b.b.x, a.b.y - b.b.y);
+    const manos = {};
+    [["L", leftBtns, objL], ["R", rightBtns, objR]].forEach(([h, btns, obj]) => {
+        const items = itemsMano(btns, bellows).map(i => ({ ...i, hand: h }));
+        const nodos = [], faltan = [];
+        let prev = null;
+        obj.forEach((ob, idx) => {
+            const k = idx + 1, cands = items.filter(i => i.midi === ob.midi);
+            if (!cands.length) {
+                faltan.push({ ...ob, k });
+                nodos.push({ ...ob, k, falta: true });
+                return;
+            }
+            let el = null;
+            const forzado = elige && elige[bellows + ":" + h + ":" + ob.midi];
+            if (forzado)
+                el = cands.find(c => c.b.id === forzado) || null;
+            if (!el)
+                el = prev ? cands.reduce((a, b) => dist(prev, b) < dist(prev, a) ? b : a) : cands[0];
+            nodos.push({ ...ob, k, item: el, alts: cands.filter(c => c !== el) });
+            prev = el;
+        });
+        manos[h] = { obj, nodos, faltan };
+    });
+    return { manos };
+}
+// Escala: desde la tónica de la octava de partida de cada mano hasta la tónica `nOct` octavas más arriba.
+function caminoEscala(leftBtns, rightBtns, bellows, rootPc, ivs, rootName, octL, octR, nOct, elige) {
+    const nombres = buildScale(rootName, ivs);
+    const armar = (octIni) => {
+        const t0 = 12 * (octIni + 1) + rootPc, obj = [];
+        for (let o = 0; o < nOct; o++)
+            ivs.forEach((iv, g) => obj.push({ midi: t0 + 12 * o + iv, name: nombres[g], deg: g }));
+        obj.push({ midi: t0 + 12 * nOct, name: nombres[0], deg: 0 });
+        return obj;
+    };
+    return caminoNotas(leftBtns, rightBtns, bellows, armar(octL), armar(octR), elige);
+}
+// Arpegio: el acorde se arma desde la raíz (octava de partida de cada mano) y se puede invertir: la inversión k arranca en la k-ésima nota
+// del acorde (raíz, tercera, quinta, séptima) y las anteriores pasan una octava arriba. Las tensiones (9, 11, 13) se suman arriba, una octava más alta que
+// su grado simple, y todo el arpegio sube en orden. Termina en la nota inicial una octava más arriba, salvo que alguna tensión ya pase de ahí.
+function caminoArpegio(leftBtns, rightBtns, bellows, A, inv, octL, octR, nOct, elige) {
+    const base = A.tones.filter(t => !t.up).map(t => ({ ...t, off: t.iv })).sort((a, b) => a.off - b.off);
+    const tens = A.tones.filter(t => t.up).map(t => ({ ...t, off: t.iv + 12 }));
+    if (!base.length)
+        return { manos: { L: { obj: [], nodos: [], faltan: [] }, R: { obj: [], nodos: [], faltan: [] } } };
+    const k = Math.min(inv, base.length - 1);
+    const rot = [...base.slice(k), ...base.slice(0, k).map(t => ({ ...t, off: t.off + 12 })), ...tens].sort((a, b) => a.off - b.off);
+    const armar = (octIni) => {
+        const b0 = 12 * (octIni + 1) + A.rootIdx, todas = [];
+        for (let o = 0; o < nOct; o++)
+            rot.forEach(t => todas.push({ midi: b0 + t.off + 12 * o, name: t.esc, lab: t.lab, deg: 0 }));
+        todas.sort((a, b) => a.midi - b.midi);
+        const obj = [];
+        todas.forEach(n => { if (!obj.some(x => x.midi === n.midi))
+            obj.push(n); });
+        const cierre = b0 + rot[0].off + 12 * nOct;
+        if (cierre > obj[obj.length - 1].midi)
+            obj.push({ midi: cierre, name: rot[0].esc, lab: rot[0].lab, deg: 0 });
+        return obj;
+    };
+    return caminoNotas(leftBtns, rightBtns, bellows, armar(octL), armar(octR), elige);
+}
+const octDeMidi = (m) => Math.floor(m / 12) - 1;
+// ─── DISTRIBUCIÓN DEL ACORDE ENTRE LAS DOS MANOS ─────────────────────────────
+const VOZ_RAICES = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+// La raíz es el bajo (mano izquierda, octava `bajoOct`). El resto se apila hacia arriba desde la octava `relOct`, con la inversión `inv`.
+// Cada nota queda como "distancia en semitonos al bajo" (d) + mano: esa forma se puede mover a cualquier tonalidad.
+// `man` guarda cambios nota por nota (por intervalo del acorde): mano y octava sobre el bajo.
+function armarVoz(A, cfg) {
+    const bass = 12 * (cfg.bajoOct + 1) + A.rootIdx;
+    const ts = A.tones.map(t => ({ t, off: t.iv + (t.up ? 12 : 0) })).sort((a, b) => a.off - b.off);
+    const otros = ts.filter(x => x.off !== 0), k = Math.min(cfg.inv, Math.max(0, otros.length - 1));
+    const rot = [...otros.slice(k), ...otros.slice(0, k)], mano = cfg.preset === "izq" ? "L" : "R", out = [];
+    const raiz = ts.find(x => x.off === 0);
+    if (raiz)
+        out.push({ key: 0, midi: bass, mano: "L", name: raiz.t.esc, lab: raiz.t.lab });
+    let prev = bass;
+    rot.forEach((x, j) => { const pc = (A.rootIdx + x.t.iv) % 12; let m = j === 0 ? 12 * (cfg.relOct + 1) + pc : pc + 12 * Math.floor(prev / 12); while (m <= prev)
+        m += 12; prev = m; out.push({ key: x.t.iv, midi: m, mano, name: x.t.esc, lab: x.t.lab }); });
+    return out.map(n => {
+        const o = cfg.man && cfg.man[n.key], midi = o ? bass + n.key + 12 * o.ex : n.midi;
+        return { ...n, midi, d: midi - bass, mano: o ? o.mano : (cfg.soloLista ? "-" : n.mano) };
+    }).sort((a, b) => a.midi - b.midi);
+}
+const vozCifrar = (A, cfg, notas) => ["HM1", A.ac.root, A.ac.base, A.ac.sept, A.ac.nov, A.ac.und, A.ac.tre, A.ac.seis ? 1 : 0, A.ac.sin5 ? 1 : 0, "bajo" + cfg.bajoOct,
+    "I:" + notas.filter(n => n.mano === "L").map(n => n.d).join(","), "D:" + notas.filter(n => n.mano === "R").map(n => n.d).join(",")].join("|");
+function vozLeer(txt) {
+    const p = String(txt).trim().split("|");
+    if (p.length !== 12 || p[0] !== "HM1")
+        return null;
+    const [, root, base, sept, nov, und, tre, seis, sin5, bajo, I, D] = p, ids = (L, v) => L.some(x => x.id === v);
+    if (!ACORDE_RAICES.includes(root) || !ids(ACORDE_BASES, base) || !ids(ACORDE_SEPT, sept) || !ids(ACORDE_NOV, nov) || !ids(ACORDE_UND, und) || !ids(ACORDE_TRE, tre))
+        return null;
+    const bo = Number(bajo.replace("bajo", "")), num = x => x.split(",").filter(Boolean).map(Number), L = num(I.replace(/^I:/, "")), R = num(D.replace(/^D:/, ""));
+    if (!(bo >= 1 && bo <= 5) || [...L, ...R].some(v => !Number.isInteger(v) || v < 0 || v > 70))
+        return null;
+    return { ac: { root, base, sept, nov, und, tre, seis: seis === "1", sin5: sin5 === "1" }, bajoOct: bo, L, R };
+}
+// Título de sección para ordenar los paneles
+function Seccion({ t }) { return React.createElement("p", { style: { ...uiLabel, color: "#c8c8cc", borderTop: "1px solid #232326", paddingTop: 10, margin: "6px 0 10px" } }, t); }
+// Armado del acorde con desplegables (misma lógica que el armador de botones, más compacto)
+function SelectoresAcorde({ a }) {
+    const op = (lista) => lista.map(x => [x.id, x.label]);
+    const extras = (a.ac.seis ? "seis" : "") + (a.ac.sin5 ? "sin5" : "");
+    return (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+        React.createElement(Desplegable, { etiqueta: "Fundamental", valor: a.ac.root, opciones: ACORDE_RAICES.map(x => [x, nombreLat(x)]), onChange: v => a.set("root", v) }),
+        React.createElement(Desplegable, { etiqueta: "Tipo", valor: a.ac.base, opciones: op(ACORDE_BASES), onChange: v => a.set("base", v) }),
+        React.createElement(Desplegable, { etiqueta: "S\u00E9ptima", valor: a.ac.sept, opciones: op(ACORDE_SEPT), onChange: v => a.set("sept", v) }),
+        React.createElement(Desplegable, { etiqueta: "Novena", valor: a.ac.nov, opciones: op(ACORDE_NOV), onChange: v => a.set("nov", v) }),
+        React.createElement(Desplegable, { etiqueta: "Oncena", valor: a.ac.und, opciones: op(ACORDE_UND), onChange: v => a.set("und", v) }),
+        React.createElement(Desplegable, { etiqueta: "Trecena", valor: a.ac.tre, opciones: op(ACORDE_TRE), onChange: v => a.set("tre", v) }),
+        React.createElement(Desplegable, { etiqueta: "Extras", valor: extras || "no", opciones: [["no", "—"], ["seis", "Con sexta (6)"], ["sin5", "Sin quinta"], ["seissin5", "Sexta y sin quinta"]], onChange: v => { a.set("seis", v.includes("seis")); a.set("sin5", v.includes("sin5")); } }),
+        React.createElement(Desplegable, { etiqueta: "Funci\u00F3n", valor: a.romano ? "rom" : "num", opciones: [["rom", "I · III · V"], ["num", "1 · 3 · 5"]], onChange: v => a.setRomano(v === "rom") })));
+}
+// Lista desplegable con etiqueta (para ordenar los paneles con pocos botones)
+function Desplegable({ etiqueta, valor, opciones, onChange }) {
+    return (React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 5, minWidth: 0 } },
+        etiqueta ? React.createElement("span", { style: uiLabel }, etiqueta) : null,
+        React.createElement("select", { value: String(valor), onChange: e => onChange(e.target.value), style: { width: "100%", padding: "8px 10px", borderRadius: 10, border: "1px solid #2a2a2e", background: "#0e0e10", color: "#ececec", fontSize: 13, fontFamily: UI_FONT, colorScheme: "dark", cursor: "pointer" } }, opciones.map(([v, l]) => (React.createElement("option", { key: String(v), value: String(v) }, l))))));
+}
+// Leyenda: qué significa cada señal del dibujo (se amplía cada vez que se suma una señal nueva)
+function LeyendaCamino({ arpegio = false }) {
+    const fila = (icono, titulo, texto) => (React.createElement("div", { style: { display: "flex", gap: 12, alignItems: "center", padding: "8px 0", borderTop: "1px solid #1c1c1f" } },
+        React.createElement("div", { style: { width: 92, flexShrink: 0, display: "flex", justifyContent: "center", alignItems: "center" } }, icono),
+        React.createElement("div", { style: { fontSize: 12, lineHeight: 1.45, minWidth: 0 } },
+            React.createElement("b", { style: { color: "#ececec" } }, titulo),
+            React.createElement("br", null),
+            React.createElement("span", { style: { color: "#9a9a9f" } }, texto))));
+    const circ = (bg, borde, glow, hijo) => (React.createElement("span", { style: { display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: 40, height: 40, borderRadius: "50%", background: bg, border: borde, boxShadow: glow || "none", color: "#fff", lineHeight: 1.05, textShadow: "0 1px 3px #000" } }, hijo));
+    const flecha = (dash) => (React.createElement("svg", { width: "84", height: "18" },
+        React.createElement("defs", null,
+            React.createElement("marker", { id: "ley" + (dash ? "d" : "l"), viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "4.2", markerHeight: "4.2", orient: "auto" },
+                React.createElement("path", { d: "M0,0 L10,5 L0,10 z", fill: "#fff" }))),
+        React.createElement("line", { x1: "4", y1: "9", x2: "78", y2: "9", stroke: "#fff", strokeWidth: "3", strokeLinecap: "round", strokeDasharray: dash ? "7 6" : undefined, markerEnd: `url(#ley${dash ? "d" : "l"})` })));
+    const etq = (t) => (React.createElement("span", { style: { background: "#000d", border: "1px solid #ffffff66", color: "#fff", fontSize: 10, fontWeight: 800, padding: "1px 7px", borderRadius: 8, fontFamily: "monospace" } }, t));
+    return (React.createElement("div", { style: { margin: "0 0 12px", padding: "4px 12px", borderRadius: 12, background: "#0e0e10", border: "1px solid #2a2a2e" } },
+        fila(circ(nc("G"), "3px solid rgba(255,255,255,.55)", `0 0 10px ${nc("G")}99`, React.createElement(React.Fragment, null,
+            React.createElement("b", { style: { fontSize: 13 } }, "Sol"),
+            React.createElement("span", { style: { fontSize: 9, fontWeight: 800, fontFamily: "monospace" } }, arpegio ? "V" : "5"))), arpegio ? "Nota del arpegio" : "Nota de la escala", arpegio ? "Tiene el color de siempre. El nombre arriba y, abajo, su función en el acorde (I raíz, III tercera, V quinta, VII séptima). El orden lo marcan las flechas."
+            : "Tiene el color de siempre. El nombre arriba y, abajo, el número de orden en que se toca (1 es la tónica)."),
+        fila(flecha(false), "Flecha con línea llena", "Hacia dónde sigue el camino en esa mano cuando el fuelle está ABRIENDO."),
+        fila(flecha(true), "Flecha con línea punteada", "Hacia dónde sigue el camino en esa mano cuando el fuelle está CERRANDO."),
+        fila(React.createElement("span", { style: { display: "inline-flex", gap: 6 } },
+            circ(nc("C"), "3px solid rgba(255,255,255,.55)", "", React.createElement("b", { style: { fontSize: 12 } }, "Do")),
+            circ(nc("C"), "3px solid rgba(255,255,255,.55)", "", React.createElement("b", { style: { fontSize: 12 } }, "Do"))), "Las dos manos", "Cada teclado tiene su propia octava de partida y muestra su propio camino. Si una mano no tiene alguna nota, queda sin marcar en esa mano y abajo se avisa cuáles faltan."),
+        fila(circ("#3a3a3a", "3px dashed #9a9a9a", "", React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "#cfcfcf" } }, "5?")), "Círculo gris con borde punteado", "Esa misma nota está también en otro botón de esta misma mano. Tocalo para usar este botón en lugar del de color."),
+        fila(React.createElement("span", { style: { fontSize: 11, fontWeight: 800, fontFamily: "monospace", color: "#fff", border: "2px solid rgba(255,255,255,.35)", background: nc("D"), borderRadius: 9, padding: "3px 8px", textShadow: "0 1px 3px #000" } }, "2 Re3"), "Tira de notas", "Una fila por mano, con las notas de su tramo y su octava. Tocar una nota la hace sonar."),
+        fila(circ("#141414", "3px solid #333", "", null), "Círculo oscuro vacío", "Botón que no forma parte de este camino. Tocalo y suena su nota."),
+        fila(circ(nc("E"), "3px solid #fff", "0 0 0 3px #fff, 0 0 14px #fff", React.createElement("b", { style: { fontSize: 13 } }, "Mi")), "Aro blanco brillante", "La nota que está sonando en este momento, mientras escuchás el recorrido."),
+        fila(React.createElement("span", { style: { fontSize: 12, color: "#6a6a6e", textDecoration: "line-through", border: "1px dashed #444", borderRadius: 8, padding: "3px 8px" } }, "\u2715 Si3"), "Nota tachada en la tira", "Esa nota no existe en ninguna mano en este sentido del fuelle. No se inventa ningún botón."),
+        fila(React.createElement("span", { style: { fontSize: 11, fontWeight: 700, border: "1px solid #2a2a2a", borderRadius: 9, padding: "5px 9px", color: "#ececec" } }, "\u25B6 Escuchar"), "Escuchar", "Suena lo que está a la vista: con IZQ o DER, solo esa mano; con Ambas, las dos juntas. Con la figura (redonda a semicorchea) y la velocidad que elijas.")));
 }
 // ─── EJERCICIOS: ARMAR EL TECLADO · PONER LAS NOTAS ───────────────────────────
 const FORMA_TOL = 46, FORMA_GRID = 14; // 46 ≈ un botón de margen (ver FORMA_NIVELES)
@@ -3247,6 +3546,50 @@ function NotaPicker({ rect, actual, pedirOct, onSet, onErase, onClose, onListen 
             React.createElement("button", { onClick: onErase, style: { flex: 1, padding: "5px", borderRadius: 8, border: "1px solid #5c2d2d", background: "#1f0a0a", color: "#d98f88", fontWeight: 700, fontSize: 11, cursor: "pointer" } }, "\uD83D\uDDD1 Borrar"),
             React.createElement("button", { onClick: onClose, style: { flex: 1, padding: "5px", borderRadius: 8, border: "1px solid #2a2a2a", background: "transparent", color: "#8a8a8a", fontSize: 11, cursor: "pointer" } }, "Cerrar"))));
 }
+// ─── UBICAR LÍNEAS: hileras, diagonales y otros patrones para entender dónde está cada botón ───
+const LIN_COLS = ["#f2f2f2", "#7fb3d5", "#e6b17e", "#a3d9a5", "#d7a3d9", "#e3dc7a", "#f08a8a", "#8fd9d2", "#aab0ff"];
+const LIN_FILAS = { L: [[1, 5], [6, 12], [13, 18], [19, 25], [26, 33]], R: [[1, 4], [5, 9], [10, 15], [16, 22], [23, 30], [31, 38]] };
+const LIN_TIPOS = [["filas", "Filas (arcos)"], ["diagAbj", "Diagonales ↘"], ["diagArr", "Diagonales ↙"], ["octavas", "Por octava"], ["nombre", "Misma nota"]];
+const LIN_TEXTO = {
+    filas: "Las filas son los arcos de botones: seis en la mano derecha y cinco en la izquierda. Cada fila se cuenta de izquierda a derecha.",
+    diagAbj: "Cada botón tiene un vecino abajo y a la derecha: seguirlo arma una diagonal ↘. Se cuenta de arriba hacia abajo.",
+    diagArr: "Cada botón tiene un vecino abajo y a la izquierda: seguirlo arma una diagonal ↙. Se cuenta de arriba hacia abajo.",
+    octavas: "Agrupa los botones por octava, según el fuelle elegido. Se cuenta de la nota más grave a la más aguda.",
+    nombre: "Junta todos los botones que dan la misma nota, según el fuelle elegido. Se cuenta del más grave al más agudo.",
+};
+function lineasDe(h, btns, tipo, bellows) {
+    if (!btns.length)
+        return [];
+    const by = Object.fromEntries(btns.map(b => [b.id, b]));
+    const filas = (LIN_FILAS[h] || []).map(([a, b]) => { const ids = []; for (let n = a; n <= b; n++) {
+        const id = h + String(n).padStart(2, "0");
+        if (by[id])
+            ids.push(id);
+    } return ids.sort((p, q) => by[p].x - by[q].x); }).filter(r => r.length);
+    if (tipo === "filas")
+        return filas.map((ids, i) => ({ nombre: "Fila " + (i + 1), ids }));
+    if (tipo === "diagAbj" || tipo === "diagArr") {
+        const sg = tipo === "diagAbj" ? 1 : -1, nxt = {};
+        for (let r = 0; r < filas.length - 1; r++)
+            for (const a of filas[r]) {
+                const c = filas[r + 1].filter(b => { const dx = sg * (by[b].x - by[a].x); return dx >= 10 && dx <= 85 && by[b].y > by[a].y; });
+                if (c.length)
+                    nxt[a] = c.reduce((m, b) => Math.abs(by[b].x - by[a].x) < Math.abs(by[m].x - by[a].x) ? b : m);
+            }
+        const tiene = new Set(Object.values(nxt)), out = [];
+        filas.flat().forEach(a => { if (!tiene.has(a)) {
+            const l = [a];
+            while (nxt[l[l.length - 1]])
+                l.push(nxt[l[l.length - 1]]);
+            out.push(l);
+        } });
+        const mx = l => l.reduce((t, id) => t + by[id].x, 0) / l.length;
+        return out.sort((p, q) => mx(p) - mx(q)).map((ids, i) => ({ nombre: "Diagonal " + (i + 1), ids }));
+    }
+    const its = itemsMano(btns, bellows).sort((p, q) => p.midi - q.midi || p.b.x - q.b.x), g = {};
+    its.forEach(it => { const k = tipo === "octavas" ? it.oct : it.pc; (g[k] = g[k] || []).push(it.b.id); });
+    return Object.keys(g).map(Number).sort((a, b) => a - b).map(k => ({ nombre: tipo === "octavas" ? "Octava " + k : nombreLat(CHROMATIC[k]), ids: g[k] }));
+}
 function EntrenadorTab({ preset } = {}) {
     const [leftBtns, setLeftBtns] = useState([]);
     const [rightBtns, setRightBtns] = useState([]);
@@ -3257,7 +3600,7 @@ function EntrenadorTab({ preset } = {}) {
     const [checked, setChecked] = useState(false);
     const [picker, setPicker] = useState(null); // botón abierto en la hoja de color
     const [copied, setCopied] = useState(false);
-    const [modo, setModo] = useState("colores"); // "colores" | "acordes"
+    const [modo, setModo] = useState("colores"); // "colores" | "acordes" | "escalas" | "forma" | "notas" | "camino"
     const [chordSel, setChordSel] = useState({}); // `${id}|${bellows}` -> true
     const [reveal, setReveal] = useState(false);
     const [formaPts, setFormaPts] = useState({ L: [], R: [] }); // círculos puestos de memoria (ejercicio "Armar el teclado")
@@ -3277,6 +3620,69 @@ function EntrenadorTab({ preset } = {}) {
     // — Escalas —
     const [escRoot, setEscRoot] = useState("C"), [escTipo, setEscTipo] = useState("mayor"), [escMano, setEscMano] = useState("der");
     const [escDir, setEscDir] = useState("sube"), [escStart, setEscStart] = useState(-1), [escModo, setEscModo] = useState("ver");
+    // — Camino de las escalas —
+    const [camOctL, setCamOctL] = useState(3), [camOctR, setCamOctR] = useState(4), [camLong, setCamLong] = useState(1);
+    const [camFig, setCamFig] = useState("negra"), [camBpm, setCamBpm] = useState(80), [camSent, setCamSent] = useState("sube"), [camMetro, setCamMetro] = useState("negra");
+    const [camElige, setCamElige] = useState({}), [camSuena, setCamSuena] = useState(null), [camLey, setCamLey] = useState(false);
+    const esCam = modo === "camino" || modo === "arpegio" || modo === "voz"; // vistas "Ver y escuchar" (escalas y acordes)
+    const [acoInv, setAcoInv] = useState(0), [acoUltimo, setAcoUltimo] = useState("arpegio"); // inversión y última vista de la pestaña Acordes
+    useEffect(() => { if (modo === "arpegio" || modo === "acordes" || modo === "voz")
+        setAcoUltimo(modo); }, [modo]);
+    const nTonosArp = acorde.tones.filter(t => !t.up).length, acoInvOk = Math.min(acoInv, Math.max(0, nTonosArp - 1), 3);
+    const [escUltimo, setEscUltimo] = useState("camino"); // última vista de la pestaña Escalas
+    useEffect(() => { if (modo === "camino" || modo === "escalas")
+        setEscUltimo(modo); }, [modo]);
+    useEffect(() => { if (modo === "escalas" && !ESC_ENT.some(e => e.id === escTipo))
+        setEscTipo("mayor"); }, [modo, escTipo]); // Practicar solo tiene las escalas de 7 notas y la cromática
+    const camTimers = useRef([]), camBus = useRef(null);
+    const camDef = ESCALAS_HERO.find(e => e.id === escTipo) || ESCALAS_HERO[0];
+    // octavas que realmente tiene cada mano (según la tabla del teclado)
+    const rg = useMemo(() => {
+        if (!leftBtns.length || !rightBtns.length)
+            return { L: [2, 3, 4], R: [3, 4, 5, 6] };
+        const f = (btns) => { const m = [...itemsMano(btns, "abre"), ...itemsMano(btns, "cierra")].map(i => i.midi), a = Math.floor(Math.min(...m) / 12) - 1, b = Math.floor(Math.max(...m) / 12) - 1; return Array.from({ length: b - a + 1 }, (_, k) => a + k); };
+        return { L: f(leftBtns), R: f(rightBtns) };
+    }, [leftBtns, rightBtns]);
+    const [voz, setVoz] = useState({ preset: "bajo", bajoOct: 2, relOct: 4, inv: 0, man: {}, soloLista: false }), [vozTxt, setVozTxt] = useState(""), [vozMsg, setVozMsg] = useState("");
+    const vozNotas = useMemo(() => armarVoz(acorde, voz), [acorde.tones, acorde.rootIdx, voz]);
+    const dispo = useMemo(() => { const f = bel => ({ L: new Set(itemsMano(leftBtns, bel).map(i => i.midi)), R: new Set(itemsMano(rightBtns, bel).map(i => i.midi)) }); return { abre: f("abre"), cierra: f("cierra") }; }, [leftBtns, rightBtns]);
+    const cam = useMemo(() => !leftBtns.length ? null
+        : modo === "camino" ? caminoEscala(leftBtns, rightBtns, bellows, noteIdx(escRoot), camDef.ivs, escRoot, camOctL, camOctR, camLong, camElige)
+            : modo === "arpegio" ? caminoArpegio(leftBtns, rightBtns, bellows, acorde, acoInvOk, camOctL, camOctR, camLong, camElige)
+                : modo === "voz" ? caminoNotas(leftBtns, rightBtns, bellows, vozNotas.filter(n => n.mano === "L").map(n => ({ midi: n.midi, name: n.name, lab: n.lab, deg: 0 })), vozNotas.filter(n => n.mano === "R").map(n => ({ midi: n.midi, name: n.name, lab: n.lab, deg: 0 })), camElige) : null, [modo, leftBtns, rightBtns, bellows, escRoot, escTipo, camOctL, camOctR, camLong, camElige, acorde.tones, acoInvOk, vozNotas]);
+    const camMapa = useMemo(() => {
+        const m = {};
+        if (!cam)
+            return m;
+        ["L", "R"].forEach(h => {
+            const nodos = cam.manos[h].nodos;
+            nodos.forEach(nd => { if (!nd.falta)
+                m[nd.item.b.id] = { t: "nodo", nd, hand: h }; });
+            nodos.forEach(nd => { if (!nd.falta)
+                nd.alts.forEach(a => { if (!m[a.b.id])
+                    m[a.b.id] = { t: "alt", nd, hand: h }; }); });
+        });
+        return m;
+    }, [cam]);
+    const camParar = () => {
+        camTimers.current.forEach(clearTimeout);
+        camTimers.current = [];
+        setCamSuena(null);
+        const b = camBus.current;
+        if (b) {
+            try {
+                b.gain.setTargetAtTime(0, getCtx().currentTime, 0.012);
+                setTimeout(() => { try {
+                    b.disconnect();
+                }
+                catch (e) { } }, 250);
+            }
+            catch (e) { }
+            camBus.current = null;
+        }
+    };
+    useEffect(() => { camParar(); }, [modo, view, bellows, escRoot, escTipo, camOctL, camOctR, camLong, camSent, camFig, camBpm, camMetro, camElige, acorde.tones, acoInvOk, voz]);
+    useEffect(() => () => { camTimers.current.forEach(clearTimeout); }, []);
     const [prog, setProg] = useState({ i: 1, err: 0, hint: false, wrong: null });
     const escTimers = useRef([]);
     const [info, setInfo] = useState(null); // ventana de la tecla (escalas)
@@ -3347,7 +3753,7 @@ function EntrenadorTab({ preset } = {}) {
     const faltanTones = acorde.tones.filter(tn => !coveredPcs.has(tn.pc));
     const faltanPcs = new Set(faltanTones.map(tn => tn.pc));
     const chordProps = modo === "acordes" ? { isSel, labelOf: chordLabelOf, isMissed: (btn) => faltanPcs.has(pcOf(btn)), reveal } : null;
-    const escDef = ESC_ENT.find(e => e.id === escTipo);
+    const escDef = ESC_ENT.find(e => e.id === escTipo) || ESC_ENT[0];
     const escIvs = (escTipo === "menorM" && escDir === "baja") ? ESC_ENT[1].ivs : escDef.ivs; // melódica: baja como natural
     const escRootPc = noteIdx(escRoot);
     const escNombres = buildScale(escRoot, escIvs);
@@ -3361,6 +3767,46 @@ function EntrenadorTab({ preset } = {}) {
     const itemDe = (btn) => itemsMano([btn], bellows)[0];
     const etiqueta = (it) => (escDeletreo[it.pc] || CROM_SIMPLE[CHROMATIC[it.pc]]) + it.oct;
     const tocarItem = (it) => playBand(CHROMATIC[it.pc], it.oct);
+    // Ubicar líneas
+    const [linTipo, setLinTipo] = useState("filas"), [linSel, setLinSel] = useState(-1), [linRot, setLinRot] = useState("pos");
+    const linL = useMemo(() => lineasDe("L", leftBtns, linTipo, bellows), [leftBtns, linTipo, bellows]);
+    const linR = useMemo(() => lineasDe("R", rightBtns, linTipo, bellows), [rightBtns, linTipo, bellows]);
+    const linMapa = useMemo(() => { const m = {}; [linL, linR].forEach(ls => ls.forEach((l, li) => l.ids.forEach((id, pos) => { m[id] = { li, pos, n: l.ids.length }; }))); return m; }, [linL, linR]);
+    useEffect(() => { setLinSel(-1); }, [linTipo]);
+    const linStateOf = (btn) => {
+        const e = linMapa[btn.id];
+        if (!e)
+            return { bg: "#1a1a1a", border: "2px solid #444", glow: "none", content: null };
+        const it = itemDe(btn), txt = linRot === "pos" ? String(e.pos + 1) : linRot === "nota" ? CROM_SIMPLE[CHROMATIC[it.pc]] : null;
+        const todas = linSel < 0, esta = linSel === e.li, col = LIN_COLS[e.li % LIN_COLS.length];
+        if (!todas && !esta)
+            return { bg: "#151517", border: "2px solid #2c2c30", glow: "none", content: txt ? React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: "#55555b" } }, txt) : null };
+        const bg = todas ? col : "#f2f2f2";
+        return { bg, border: esta ? "3px solid #ffffff" : "3px solid rgba(255,255,255,.35)", glow: esta ? "0 0 0 3px #ffffff55, 0 0 16px #ffffffaa" : "none",
+            content: txt ? React.createElement("span", { style: { fontSize: txt.length > 2 ? 10.5 : 14, fontWeight: 800, color: txtSobre(bg), fontFamily: linRot === "pos" ? "monospace" : "inherit" } }, txt) : null };
+    };
+    const linTap = (btn) => { const e = linMapa[btn.id]; if (!e)
+        return; tocarItem(itemDe(btn)); setLinSel(p => p === e.li ? -1 : e.li); };
+    const linFlechas = (h) => {
+        if (linSel < 0)
+            return null;
+        const l = (h === "L" ? linL : linR)[linSel];
+        if (!l)
+            return null;
+        const by = Object.fromEntries((h === "L" ? leftBtns : rightBtns).map(b => [b.id, b])), out = [];
+        for (let i = 0; i < l.ids.length - 1; i++) {
+            const a = by[l.ids[i]], b = by[l.ids[i + 1]];
+            out.push({ a: { x: a.x + BTN_SIZE / 2, y: a.y + BTN_SIZE / 2 }, b: { x: b.x + BTN_SIZE / 2, y: b.y + BTN_SIZE / 2 }, dash: false });
+        }
+        return out;
+    };
+    const linEscuchar = (h) => {
+        const l = (h === "L" ? linL : linR)[linSel];
+        if (!l)
+            return;
+        const by = Object.fromEntries((h === "L" ? leftBtns : rightBtns).map(b => [b.id, b]));
+        l.ids.forEach((id, i) => { const it = itemDe(by[id]); playBandDur(CHROMATIC[it.pc], it.oct, 0.4, i * 0.38); });
+    };
     // Digitación: viene dentro del ejercicio asignado (solo si la configuración sigue siendo la del ejercicio)
     const sigAct = [escTipo, escRoot, escMano, escDir, bellows, escStart].join("|");
     const sigPre = (preset && preset.tipo === "escala") ? [preset.escala || "mayor", preset.root || "C", preset.mano === "izq" ? "izq" : "der", preset.dir === "baja" ? "baja" : "sube", preset.fuelle === "cierra" ? "cierra" : "abre", preset.inicio === undefined ? -1 : preset.inicio].join("|") : "";
@@ -3456,13 +3902,171 @@ function EntrenadorTab({ preset } = {}) {
     const formaBien = formaStat.reduce((a, x) => a + x.m.okB.size, 0), formaTot = formaStat.reduce((a, x) => a + x.real.length, 0);
     const formaExtra = formaStat.reduce((a, x) => a + x.m.extra, 0), formaFalta = formaStat.reduce((a, x) => a + x.m.falta.length, 0);
     const formaPuestos = formaStat.reduce((a, x) => a + x.n, 0);
-    const scaleProps = modo === "escalas" ? { stateOf: escStateOf } : modo === "notas" ? { stateOf: notaStateOf } : null;
-    const tapBtn = (btn, rect) => modo === "acordes" ? toggleSel(btn) : modo === "escalas" ? escTap(btn, rect) : modo === "notas" ? setNotaPicker({ btn, rect }) : openPicker(btn, rect);
+    // — Camino de las escalas: cada mano muestra su propio camino —
+    const camStateOf = (btn) => {
+        const e = camMapa[btn.id];
+        if (!e) {
+            const nt = CHROMATIC[itemDe(btn).pc], col = nc(nt);
+            return { bg: col + "30", border: `2px solid ${col}70`, glow: "none", content: React.createElement("span", { style: { fontSize: 8.5, fontWeight: 700, color: "#ffffffa0", textShadow: "0 1px 2px #000" } }, CROM_SIMPLE[nt]) };
+        }
+        if (e.t === "alt")
+            return { bg: "#3a3a3a", border: "3px dashed #9a9a9a", glow: "none", content: React.createElement("span", { style: { fontSize: 10, fontWeight: 800, color: "#cfcfcf" } },
+                    e.nd.k,
+                    "?") };
+        const col = nc(CHROMATIC[e.nd.item.pc]), suena = !!camSuena && camSuena.includes(btn.id), nom = nombreLat(e.nd.name);
+        return { bg: col, border: suena ? "3px solid #fff" : "3px solid rgba(255,255,255,.55)", glow: suena ? "0 0 0 4px #fff, 0 0 18px #fff" : `0 0 10px ${col}99`,
+            content: React.createElement("span", { style: { display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.05, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,.95)" } },
+                React.createElement("b", { style: { fontSize: nom.length > 3 ? 10.5 : 13 } }, nom),
+                React.createElement("span", { style: { fontSize: 9, fontWeight: 800, fontFamily: "monospace" } }, e.nd.lab !== undefined ? e.nd.lab : e.nd.k)) };
+    };
+    const camTap = (btn) => {
+        const e = camMapa[btn.id];
+        if (e && e.t === "alt") {
+            setCamElige(s => ({ ...s, [bellows + ":" + e.hand + ":" + e.nd.midi]: btn.id }));
+            return;
+        }
+        tocarItem(itemDe(btn));
+    };
+    const camCentro = (b) => ({ x: b.x + BTN_SIZE / 2, y: b.y + BTN_SIZE / 2 });
+    const camFlechas = (h) => {
+        if (!cam || modo === "voz")
+            return null;
+        const nodos = cam.manos[h].nodos, out = [];
+        for (let i = 0; i < nodos.length - 1; i++) {
+            const a = nodos[i], b = nodos[i + 1];
+            if (a.falta || b.falta)
+                continue;
+            out.push({ a: camCentro(a.item.b), b: camCentro(b.item.b), dash: bellows === "cierra" });
+        }
+        return out;
+    };
+    // Suena lo que está a la vista: IZQ o DER = esa mano; Ambas = las dos juntas, paso a paso
+    const camPasos = () => {
+        if (!cam)
+            return [];
+        if (modo === "voz") {
+            const hs = view === "izquierda" ? ["L"] : view === "derecha" ? ["R"] : ["L", "R"];
+            return hs.flatMap(h => cam.manos[h].nodos.filter(n => !n.falta)).sort((a, b) => a.midi - b.midi).map(nd => ({ partes: [nd] }));
+        }
+        const hs = view === "izquierda" ? ["L"] : view === "derecha" ? ["R"] : ["L", "R"];
+        const n = Math.max(...hs.map(h => cam.manos[h].nodos.length)), out = [];
+        for (let i = 0; i < n; i++) {
+            const partes = hs.map(h => cam.manos[h].nodos[i]).filter(nd => nd && !nd.falta);
+            if (partes.length)
+                out.push({ partes });
+        }
+        return out;
+    };
+    const camSecuencia = () => {
+        const ok = camPasos();
+        return camSent === "baja" ? [...ok].reverse() : camSent === "ida" ? [...ok, ...[...ok].reverse().slice(1)] : ok;
+    };
+    // Reproduce pasos (cada paso = notas juntas). Sonido y metrónomo se programan en el reloj de audio: el tempo es exacto.
+    const camTocar = (sec, ms) => {
+        camParar();
+        if (!sec.length)
+            return;
+        const ctx = getCtx();
+        if (!ctx)
+            return;
+        if (ctx.state === "suspended")
+            ctx.resume();
+        const bus = ctx.createGain();
+        bus.connect(ctx.destination);
+        camBus.current = bus;
+        const a0 = 0.12, total = sec.length * ms / 1000;
+        sec.forEach((p, i) => {
+            p.partes.forEach(nd => playBandDur(CHROMATIC[nd.item.pc], nd.item.oct, Math.min(ms / 1000 * 0.94, 6), a0 + i * ms / 1000, bus));
+            camTimers.current.push(setTimeout(() => setCamSuena(p.partes.map(nd => nd.item.b.id)), a0 * 1000 + i * ms));
+        });
+        if (camMetro !== "no") {
+            const u = FIGURAS.find(f => f.id === camMetro).beats, bm = u * 60 / camBpm, cada = Math.max(1, Math.round(4 / u));
+            for (let j = 0; j < Math.ceil(total / bm - 1e-6); j++)
+                playClick(a0 + j * bm, j % cada === 0, bus);
+        }
+        camTimers.current.push(setTimeout(() => setCamSuena(null), a0 * 1000 + total * 1000));
+    };
+    const camEscuchar = () => camTocar(camSecuencia(), FIGURAS.find(f => f.id === camFig).beats * 60000 / camBpm);
+    const vozCfg = (patch) => setVoz(v => ({ ...v, ...patch, man: {}, soloLista: false }));
+    const vozSet = (n, patch) => setVoz(v => { var _a, _b; const bass = 12 * (v.bajoOct + 1) + acorde.rootIdx; return { ...v, man: { ...v.man, [n.key]: { mano: (_a = patch.mano) !== null && _a !== void 0 ? _a : n.mano, ex: (_b = patch.ex) !== null && _b !== void 0 ? _b : Math.round((n.midi - bass - n.key) / 12) } } }; });
+    const vozAcorde = () => {
+        if (!cam)
+            return;
+        const hs = view === "izquierda" ? ["L"] : view === "derecha" ? ["R"] : ["L", "R"];
+        const nds = hs.flatMap(h => cam.manos[h].nodos.filter(n => !n.falta));
+        if (nds.length)
+            camTocar([{ partes: nds }], 2200);
+    };
+    const vozCif = vozCifrar(acorde, voz, vozNotas);
+    const vozCopiar = () => { (navigator.clipboard ? navigator.clipboard.writeText(vozCif) : Promise.reject()).then(() => setVozMsg("Copiado."), () => setVozMsg("Seleccioná el texto y copialo.")); };
+    const vozCargar = () => {
+        const c = vozLeer(vozTxt);
+        if (!c) {
+            setVozMsg("No pude leer ese cifrado: tiene que empezar con HM1|…");
+            return;
+        }
+        const man = {};
+        [["L", c.L], ["R", c.R]].forEach(([h, l]) => l.forEach(d => { man[d % 12] = { mano: h, ex: Math.floor(d / 12) }; }));
+        acorde.setAll(c.ac);
+        setVoz(v => ({ ...v, bajoOct: c.bajoOct, man, soloLista: true }));
+        setVozMsg("Cifrado cargado.");
+    };
+    const camNotaTxt = (nd) => nombreLat(nd.name) + octDeMidi(nd.midi);
+    // Cabecera compartida de la pestaña Escalas: vista (Ver y escuchar / Practicar), tónica y escala
+    const escCab = (React.createElement(React.Fragment, null,
+        React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" } },
+            React.createElement("button", { style: uiPill(modo === "camino", { padding: "7px 16px" }), onClick: () => setModo("camino") }, "\uD83E\uDDED Ver y escuchar"),
+            React.createElement("button", { style: uiPill(modo === "escalas", { padding: "7px 16px" }), onClick: () => setModo("escalas") }, "\u270B Practicar")),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+            React.createElement(Desplegable, { etiqueta: "T\u00F3nica", valor: escRoot, opciones: ACORDE_RAICES.map(x => [x, nombreLat(x)]), onChange: v => { setEscRoot(v); setEscStart(-1); } }),
+            React.createElement(Desplegable, { etiqueta: "Escala", valor: escTipo, opciones: modo === "camino" ? ESCALAS_HERO.map(e => [e.id, e.corto]) : ESC_ENT.map(e => [e.id, e.nombre]), onChange: setEscTipo }))));
+    // Parte común de las vistas "Ver y escuchar": velocidad, escuchar, tira de notas por mano y avisos
+    const camAbajo = (React.createElement(React.Fragment, null,
+        React.createElement("div", { className: "flex flex-wrap gap-3 items-center mb-3" },
+            React.createElement("span", { style: uiLabel }, "Velocidad"),
+            React.createElement("input", { type: "range", min: "30", max: "220", step: "1", value: camBpm, onChange: e => setCamBpm(Number(e.target.value)), style: { width: 170 } }),
+            React.createElement("span", { style: { fontSize: 12, color: "#ececec", fontFamily: "monospace", minWidth: 74 } },
+                "\u2669 = ",
+                camBpm),
+            React.createElement("button", { style: uiPill(!!camSuena, { padding: "7px 16px" }), onClick: camSuena ? camParar : camEscuchar }, camSuena ? "■ Detener" : "▶ Escuchar")),
+        cam && [["L", "Mano izquierda"], ["R", "Mano derecha"]].map(([h, nombre]) => {
+            const m = cam.manos[h], nada = m.nodos.every(n => n.falta);
+            return (React.createElement("div", { key: h, style: { marginBottom: 10 } },
+                React.createElement("p", { style: { ...uiLabel, margin: "0 0 5px" } }, nombre),
+                React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } }, m.nodos.map(nd => nd.falta
+                    ? React.createElement("span", { key: nd.k, style: { fontSize: 11, color: "#6a6a6e", textDecoration: "line-through", border: "1px dashed #444", borderRadius: 8, padding: "4px 8px" } },
+                        "\u2715 ",
+                        camNotaTxt(nd))
+                    : React.createElement("button", { key: nd.k, onClick: () => tocarItem(nd.item), style: { border: "2px solid rgba(255,255,255,.35)", background: nc(CHROMATIC[nd.item.pc]), color: "#fff", textShadow: "0 1px 3px #000", borderRadius: 9, padding: "3px 8px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: "monospace" } },
+                        nd.lab !== undefined ? nd.lab : nd.k,
+                        " ",
+                        camNotaTxt(nd)))),
+                React.createElement("p", { style: { fontSize: 12, color: m.faltan.length ? "#c9a25a" : "#8a8a8a", margin: "6px 0 0", lineHeight: 1.5 } }, nada ? `No hay botones para este tramo ${bellows === "abre" ? "abriendo" : "cerrando"}.`
+                    : `${bellows === "abre" ? "Abriendo" : "Cerrando"}: ${m.faltan.length === 0 ? "completa" : "no tiene " + m.faltan.map(camNotaTxt).join(", ")}.`)));
+        })));
+    // Cabecera de la vista de acordes: Ver y escuchar / Armar
+    const acoVistas = (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" } },
+        React.createElement("button", { style: uiPill(modo === "arpegio", { padding: "7px 16px" }), onClick: () => setModo("arpegio") }, "\uD83E\uDDED Ver y escuchar"),
+        React.createElement("button", { style: uiPill(modo === "voz", { padding: "7px 16px" }), onClick: () => setModo("voz") }, "\uD83C\uDFB9 Distribuir"),
+        React.createElement("button", { style: uiPill(modo === "acordes", { padding: "7px 16px" }), onClick: () => setModo("acordes") }, "\uD83C\uDFBC Armar")));
+    const scaleProps = modo === "lineas" ? { stateOf: linStateOf } : modo === "escalas" ? { stateOf: escStateOf } : modo === "notas" ? { stateOf: notaStateOf } : esCam ? { stateOf: camStateOf } : null;
+    const tapBtn = (btn, rect) => modo === "lineas" ? linTap(btn) : modo === "acordes" ? toggleSel(btn) : modo === "escalas" ? escTap(btn, rect) : modo === "notas" ? setNotaPicker({ btn, rect }) : esCam ? camTap(btn) : openPicker(btn, rect);
     const painted = allButtons.filter(b => guesses[keyOf(b.id)]);
     const correctos = painted.filter(b => guesses[keyOf(b.id)] === correctOf(b));
     const reiniciarFuelle = () => {
+        if (modo === "lineas") {
+            setLinSel(-1);
+            return;
+        }
         if (modo === "escalas") {
             setProg({ i: 1, err: 0, hint: false, wrong: null });
+            return;
+        }
+        if (esCam) {
+            camParar();
+            setCamElige({});
+            if (modo === "voz")
+                setVoz(v => ({ ...v, man: {}, soloLista: false }));
             return;
         }
         if (modo === "forma") {
@@ -3535,39 +4139,29 @@ function EntrenadorTab({ preset } = {}) {
         React.createElement("div", { className: "mb-4" },
             React.createElement("h2", { className: "text-xl font-bold mb-1", style: { fontFamily: "'Libre Baskerville',serif" } },
                 "\uD83C\uDF93 Entrenador \u2014 ",
-                modo === "forma" ? "Armá el teclado" : modo === "notas" ? "Poné las notas" : "Pintá el teclado"),
-            React.createElement("p", { className: "text-xs text-gray-500" }, modo === "forma" ? "Reconstruí de memoria la forma de cada teclado, con círculos vacíos. Después tocá \"Corregir\"."
-                : modo === "notas" ? "Sobre el teclado con los círculos vacíos, decí qué nota corresponde a cada botón, abriendo o cerrando. Después tocá \"Corregir\"."
-                    : "Tocá cada botón y elegí, de memoria, el color que le corresponde. Después tocá \"Corregir\" para ver qué acertaste.")),
-        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", background: "#121212", border: "1.5px solid #2a2a2a", borderRadius: 10, padding: 3, gap: 2, marginBottom: 10, width: "fit-content", maxWidth: "100%" } }, [["colores", "🎨 Pintar colores"], ["acordes", "🎼 Armar acordes"], ["escalas", "🎶 Escalas"], ["forma", "◯ Armar el teclado"], ["notas", "♪ Poner las notas"]].map(([m, l]) => (React.createElement("button", { key: m, style: { ...pill(modo === m), padding: "6px 14px", fontSize: 11 }, onClick: () => setModo(m) }, l)))),
+                modo === "lineas" ? "Ubicar líneas" : modo === "forma" ? "Armá el teclado" : modo === "notas" ? "Poné las notas" : (modo === "camino" || modo === "escalas") ? "Escalas" : (modo === "arpegio" || modo === "acordes" || modo === "voz") ? "Acordes" : "Pintá el teclado"),
+            React.createElement("p", { className: "text-xs text-gray-500" }, modo === "lineas" ? "Mirá cómo se ordenan los botones en filas y diagonales, contalos y escuchá cada línea para encontrar la lógica del teclado."
+                : modo === "camino" ? "Mirá y escuchá el camino de cada escala sobre los dos teclados, abriendo o cerrando."
+                    : modo === "escalas" ? "Practicá la escala sobre el teclado, con la guía o de memoria."
+                        : modo === "voz" ? "Repartí las notas del acorde entre las dos manos, elegí la octava de cada una y guardá la forma."
+                            : modo === "arpegio" ? "Mirá y escuchá el arpegio de un acorde sobre los dos teclados, desde la raíz y con inversiones."
+                                : modo === "acordes" ? "Armá el acorde marcando sus notas en el teclado y después tocá \"Corregir\"."
+                                    : modo === "forma" ? "Reconstruí de memoria la forma de cada teclado, con círculos vacíos. Después tocá \"Corregir\"."
+                                        : modo === "notas" ? "Sobre el teclado con los círculos vacíos, decí qué nota corresponde a cada botón, abriendo o cerrando. Después tocá \"Corregir\"."
+                                            : "Tocá cada botón y elegí, de memoria, el color que le corresponde. Después tocá \"Corregir\" para ver qué acertaste.")),
+        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", background: "#121212", border: "1.5px solid #2a2a2a", borderRadius: 10, padding: 3, gap: 2, marginBottom: 10, width: "fit-content", maxWidth: "100%" } }, [["lineas", "📐 Ubicar líneas"], ["colores", "🎨 Pintar colores"], ["acordes", "🎼 Acordes"], ["escalas", "🎶 Escalas"], ["forma", "◯ Armar el teclado"], ["notas", "♪ Poner las notas"]].map(([m, l]) => (React.createElement("button", { key: m, style: { ...pill(modo === m || (m === "escalas" && modo === "camino") || (m === "acordes" && (modo === "arpegio" || modo === "voz"))), padding: "6px 14px", fontSize: 11 }, onClick: () => setModo(m === "escalas" ? escUltimo : m === "acordes" ? acoUltimo : m) }, l)))),
         modo === "escalas" && (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
-            React.createElement("p", { className: "text-xs text-gray-500 mb-3" },
-                "Eleg\u00ED una escala: el teclado te sugiere el camino coloreado, nota por nota y con su octava real. Despu\u00E9s pas\u00E1 a ",
-                React.createElement("b", null, "Practicar"),
-                " y tocala de memoria; el color aparece cuando acert\u00E1s. Us\u00E1 el bot\u00F3n Abre/Cierra de arriba para cambiar el sentido del fuelle."),
-            React.createElement("p", { style: uiLabel }, "T\u00F3nica"),
-            React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-3 mt-2" }, ACORDE_RAICES.map(x => (React.createElement("button", { key: x, style: uiPill(escRoot === x), onClick: () => { setEscRoot(x); setEscStart(-1); } }, nombreLat(x))))),
-            React.createElement("div", { className: "flex flex-wrap gap-x-6 gap-y-3 mb-3" },
-                React.createElement("div", null,
-                    React.createElement("p", { style: uiLabel }, "Escala"),
-                    React.createElement("div", { className: "flex flex-wrap gap-1.5 mt-2" }, ESC_ENT.map(e => (React.createElement("button", { key: e.id, style: uiPill(escTipo === e.id), onClick: () => setEscTipo(e.id) }, e.nombre))))),
-                React.createElement("div", null,
-                    React.createElement("p", { style: uiLabel }, "Mano"),
-                    React.createElement("div", { className: "flex gap-1.5 mt-2" }, [["der", "Derecha"], ["izq", "Izquierda"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiPill(escMano === v), onClick: () => { setEscMano(v); setEscStart(-1); } }, l))))),
-                React.createElement("div", null,
-                    React.createElement("p", { style: uiLabel }, "Sentido"),
-                    React.createElement("div", { className: "flex gap-1.5 mt-2" }, [["sube", "↑ Sube"], ["baja", "↓ Baja"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiPill(escDir === v), onClick: () => { setEscDir(v); setEscStart(-1); } }, l)))))),
-            escR.tonics.length > 1 && (React.createElement(React.Fragment, null,
-                React.createElement("p", { style: uiLabel }, "Empezar en"),
-                React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-3 mt-2" }, escR.tonics.map((t, i) => (React.createElement("button", { key: t.midi, style: uiPill(escR.startUsed === i), onClick: () => setEscStart(i) }, etiqueta(t))))))),
+            React.createElement("p", { className: "text-xs text-gray-500 mb-3" }, "Con la gu\u00EDa, el teclado te muestra la escala nota por nota, con su octava real y su color. De memoria, la toc\u00E1s vos y el color aparece cuando acert\u00E1s. Us\u00E1 el bot\u00F3n Abre / Cierra de arriba para cambiar el sentido del fuelle."),
+            escCab,
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+                React.createElement(Desplegable, { etiqueta: "Mano", valor: escMano, opciones: [["der", "Derecha"], ["izq", "Izquierda"]], onChange: v => { setEscMano(v); setEscStart(-1); } }),
+                React.createElement(Desplegable, { etiqueta: "Sentido", valor: escDir, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"]], onChange: v => { setEscDir(v); setEscStart(-1); } }),
+                escR.tonics.length > 1 && React.createElement(Desplegable, { etiqueta: "Empezar en", valor: escR.startUsed, opciones: escR.tonics.map((t, i) => [i, etiqueta(t)]), onChange: v => setEscStart(Number(v)) }),
+                React.createElement(Desplegable, { etiqueta: "C\u00F3mo", valor: escModo, opciones: [["ver", "👁 Con la guía"], ["practica", "✋ De memoria"]], onChange: setEscModo }),
+                React.createElement(Desplegable, { etiqueta: "Funci\u00F3n", valor: romano ? "rom" : "num", opciones: [["rom", "I · II · III"], ["num", "1 · 2 · 3"]], onChange: v => setRomano(v === "rom") })),
             React.createElement("div", { className: "flex flex-wrap gap-2 items-center mb-3" },
-                [["ver", "👁 Ver la escala"], ["practica", "✋ Practicar"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiPill(escModo === v, { padding: "7px 16px" }), onClick: () => setEscModo(v) }, l))),
-                React.createElement("button", { style: uiPill(false), onClick: escEscuchar }, "\u25B6 Escuchar"),
-                escModo === "practica" && React.createElement("button", { style: uiPill(prog.hint), onClick: () => setProg(p => ({ ...p, hint: !p.hint })) }, "\uD83D\uDCA1 Pista")),
-            React.createElement("div", { className: "flex flex-wrap gap-2 items-center mb-3" },
-                React.createElement("span", { style: uiLabel }, "Funci\u00F3n"),
-                React.createElement("button", { style: uiPill(romano), onClick: () => setRomano(true) }, "I \u00B7 II \u00B7 III"),
-                React.createElement("button", { style: uiPill(!romano), onClick: () => setRomano(false) }, "1 \u00B7 2 \u00B7 3")),
+                React.createElement("button", { style: uiPill(false, { padding: "7px 16px" }), onClick: escEscuchar }, "\u25B6 Escuchar"),
+                escModo === "practica" && React.createElement("button", { style: uiPill(prog.hint, { padding: "7px 16px" }), onClick: () => setProg(p => ({ ...p, hint: !p.hint })) }, "\uD83D\uDCA1 Pista")),
             React.createElement("div", { style: { display: "flex", gap: 6 } }, escR.route.map((r, i) => {
                 const col = nc(CHROMATIC[r.item.pc]);
                 const hecho = escModo === "ver" || i < prog.i;
@@ -3585,6 +4179,193 @@ function EntrenadorTab({ preset } = {}) {
                 escR.missing.map(pc => escDeletreo[pc] || CROM_SIMPLE[CHROMATIC[pc]]).join(", "),
                 "). Prob\u00E1 el otro sentido del fuelle, la otra mano u otra octava de inicio."),
             escModo === "practica" && (React.createElement("p", { style: { fontSize: 13, margin: "10px 0 0", color: prog.i >= escR.route.length && escR.route.length ? "#6b9c7c" : "#cfcfcf" } }, prog.i >= escR.route.length && escR.route.length ? `¡Escala completa! Errores: ${prog.err}` : `Tocá la nota ${prog.i + 1} de ${escR.route.length}${prog.err ? ` · errores: ${prog.err}` : ""}`)))),
+        modo === "camino" && (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
+            React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } },
+                React.createElement("p", { className: "text-xs text-gray-500", style: { margin: 0 } }, "Eleg\u00ED una escala y un tramo: se dibuja el camino nota por nota en los dos teclados. Con el bot\u00F3n Abre / Cierra cambi\u00E1s el sentido del fuelle. Cada mano tiene su propia octava de partida, as\u00ED pod\u00E9s poner, por ejemplo, la izquierda en 2 y la derecha en 3."),
+                React.createElement("button", { style: uiPill(camLey, { padding: "6px 12px", flexShrink: 0 }), onClick: () => setCamLey(v => !v) }, "\u2753 C\u00F3mo leerlo")),
+            camLey && React.createElement(LeyendaCamino, null),
+            escCab,
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "0 28px", alignItems: "start" } },
+                React.createElement("div", null,
+                    React.createElement(Seccion, { t: "Recorrido" }),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 8 } },
+                        React.createElement(Desplegable, { etiqueta: "Mano izquierda desde", valor: camOctL, opciones: rg.L.map(o => [o, nombreLat(escRoot) + o]), onChange: v => setCamOctL(Number(v)) }),
+                        React.createElement(Desplegable, { etiqueta: "Mano derecha desde", valor: camOctR, opciones: rg.R.map(o => [o, nombreLat(escRoot) + o]), onChange: v => setCamOctR(Number(v)) }),
+                        React.createElement(Desplegable, { etiqueta: "Largo", valor: camLong, opciones: [[1, "1 octava"], [2, "2 octavas"]], onChange: v => setCamLong(Number(v)) })),
+                    React.createElement("p", { style: { ...uiLabel, textTransform: "none", letterSpacing: 0, color: "#8a8a8a", fontWeight: 500, margin: "0 0 12px", fontSize: 11 } },
+                        "Izquierda: ",
+                        nombreLat(escRoot),
+                        camOctL,
+                        " \u2192 ",
+                        nombreLat(escRoot),
+                        camOctL + camLong,
+                        " \u00B7 Derecha: ",
+                        nombreLat(escRoot),
+                        camOctR,
+                        " \u2192 ",
+                        nombreLat(escRoot),
+                        camOctR + camLong)),
+                React.createElement("div", null,
+                    React.createElement(Seccion, { t: "Sonido" }),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+                        React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
+                        React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
+                        React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro })))),
+            camAbajo)),
+        modo === "arpegio" && (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
+            React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } },
+                React.createElement("p", { className: "text-xs text-gray-500", style: { margin: 0 } }, "Arm\u00E1 el acorde y mir\u00E1 su arpegio sobre los dos teclados: siempre arranca desde la ra\u00EDz y lo pod\u00E9s invertir. Los suspendidos est\u00E1n en \"Tipo\" y las tensiones en Novena, Oncena y Trecena. Con el bot\u00F3n Abre / Cierra cambi\u00E1s el sentido del fuelle."),
+                React.createElement("button", { style: uiPill(camLey, { padding: "6px 12px", flexShrink: 0 }), onClick: () => setCamLey(v => !v) }, "\u2753 C\u00F3mo leerlo")),
+            camLey && React.createElement(LeyendaCamino, { arpegio: true }),
+            acoVistas,
+            React.createElement(Seccion, { t: "Acorde" }),
+            React.createElement(SelectoresAcorde, { a: acorde }),
+            React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 } },
+                React.createElement("span", { style: { fontSize: 14, fontFamily: "'Libre Baskerville',serif", fontWeight: 700, color: "#e6e6e6" } }, acorde.name),
+                acorde.tones.map(t => (React.createElement("span", { key: t.pc, style: { display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 } },
+                    React.createElement("span", { style: { minWidth: 34, padding: "4px 6px", borderRadius: 8, background: nc(t.pc), color: txtSobre(nc(t.pc)), fontFamily: "serif", fontWeight: 900, fontSize: 12, textAlign: "center", border: "2px solid rgba(255,255,255,.2)" } }, t.nombre),
+                    React.createElement("span", { style: { fontSize: 9, fontFamily: "monospace", color: "#8a8a8a" } }, t.lab))))),
+            acorde.ac.und === "11" && (acorde.ac.base === "M" || acorde.ac.base === "aug") && React.createElement("p", { style: { fontSize: 11, color: "#c9a25a", margin: "0 0 10px", lineHeight: 1.5 } }, "La oncena natural queda a un semitono de la tercera mayor y choca con ella. Suele usarse como suspendido (Tipo sus4) o como oncena aumentada (#11)."),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "0 28px", alignItems: "start" } },
+                React.createElement("div", null,
+                    React.createElement(Seccion, { t: "Recorrido" }),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 8 } },
+                        React.createElement(Desplegable, { etiqueta: "Inversi\u00F3n", valor: acoInvOk, opciones: [[0, "Fundamental"], [1, "1ª inversión"], [2, "2ª inversión"], [3, "3ª inversión"]].filter(([v]) => v <= Math.max(0, nTonosArp - 1)), onChange: v => setAcoInv(Number(v)) }),
+                        React.createElement(Desplegable, { etiqueta: "Ra\u00EDz, mano izquierda", valor: camOctL, opciones: rg.L.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => setCamOctL(Number(v)) }),
+                        React.createElement(Desplegable, { etiqueta: "Ra\u00EDz, mano derecha", valor: camOctR, opciones: rg.R.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => setCamOctR(Number(v)) }),
+                        React.createElement(Desplegable, { etiqueta: "Largo", valor: camLong, opciones: [[1, "1 octava"], [2, "2 octavas"]], onChange: v => setCamLong(Number(v)) })),
+                    React.createElement("p", { style: { ...uiLabel, textTransform: "none", letterSpacing: 0, color: "#8a8a8a", fontWeight: 500, margin: "0 0 12px", fontSize: 11 } },
+                        "La ra\u00EDz parte en ",
+                        nombreLat(acorde.ac.root),
+                        camOctL,
+                        " (izquierda) y ",
+                        nombreLat(acorde.ac.root),
+                        camOctR,
+                        " (derecha); en las inversiones el arpegio empieza m\u00E1s arriba, en la nota que corresponda. Las inversiones usan las notas del acorde, no las tensiones.")),
+                React.createElement("div", null,
+                    React.createElement(Seccion, { t: "Sonido" }),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+                        React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
+                        React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
+                        React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro })))),
+            camAbajo)),
+        modo === "voz" && (() => {
+            const bass = 12 * (voz.bajoOct + 1) + acorde.rootIdx, nOtros = Math.max(0, acorde.tones.length - 1), nom = m => CROM_SIMPLE[CHROMATIC[m % 12]] + (Math.floor(m / 12) - 1);
+            const th = { textAlign: "left", fontSize: 10, letterSpacing: "0.1em", color: "#7c7c82", fontWeight: 600, padding: "6px 8px", textTransform: "uppercase" }, td = { padding: "6px 8px", fontSize: 12, borderTop: "1px solid #1c1c1f" };
+            return (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
+                React.createElement("p", { className: "text-xs text-gray-500", style: { margin: "0 0 10px" } }, "Arm\u00E1 el acorde y repartilo entre las dos manos: la ra\u00EDz en la izquierda como bajo y el resto arriba, o como prefieras, nota por nota. Cada nota queda guardada como una forma que se puede mover a las doce tonalidades."),
+                acoVistas,
+                React.createElement(Seccion, { t: "Acorde" }),
+                React.createElement(SelectoresAcorde, { a: acorde }),
+                React.createElement(Seccion, { t: "Distribuci\u00F3n" }),
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+                    React.createElement(Desplegable, { etiqueta: "Modelo", valor: voz.preset, opciones: [["bajo", "Bajo izq. + acorde der."], ["izq", "Todo en la izquierda"]], onChange: v => vozCfg({ preset: v }) }),
+                    React.createElement(Desplegable, { etiqueta: "Bajo (ra\u00EDz)", valor: voz.bajoOct, opciones: rg.L.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => vozCfg({ bajoOct: Number(v) }) }),
+                    React.createElement(Desplegable, { etiqueta: "Relleno desde", valor: voz.relOct, opciones: [2, 3, 4, 5, 6].map(o => [o, "Octava " + o]), onChange: v => vozCfg({ relOct: Number(v) }) }),
+                    React.createElement(Desplegable, { etiqueta: "Inversi\u00F3n del relleno", valor: Math.min(voz.inv, Math.min(3, Math.max(0, nOtros - 1))), opciones: [[0, "Fundamental"], [1, "1ª inversión"], [2, "2ª inversión"], [3, "3ª inversión"]].filter(([v]) => v <= Math.max(0, nOtros - 1)), onChange: v => vozCfg({ inv: Number(v) }) })),
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "minmax(84px,1fr) 1fr 1fr", gap: "8px 10px", alignItems: "center", marginBottom: 10 } },
+                    React.createElement("span", { style: uiLabel }, "Nota"),
+                    React.createElement("span", { style: uiLabel }, "Mano"),
+                    React.createElement("span", { style: uiLabel }, "Octava"),
+                    vozNotas.map(n => (React.createElement("div", { key: n.key, style: { display: "contents" } },
+                        React.createElement("span", { style: { display: "inline-flex", gap: 6, alignItems: "center", width: "fit-content", padding: "5px 10px", borderRadius: 9, background: nc(CHROMATIC[(acorde.rootIdx + n.key) % 12]), color: "#fff", fontWeight: 800, fontSize: 12, textShadow: "0 1px 3px #000", border: "2px solid rgba(255,255,255,.25)", opacity: n.mano === "-" ? .45 : 1 } },
+                            nombreLat(n.name),
+                            React.createElement("small", { style: { opacity: .85, fontFamily: "monospace", fontSize: 10 } }, n.lab)),
+                        React.createElement(Desplegable, { etiqueta: "", valor: n.mano, opciones: [["L", "Izquierda"], ["R", "Derecha"], ["-", "No se toca"]], onChange: v => vozSet(n, { mano: v }) }),
+                        React.createElement(Desplegable, { etiqueta: "", valor: Math.round((n.midi - bass - n.key) / 12), opciones: [0, 1, 2, 3, 4, 5, 6].map(e => [e, nombreLat(n.name) + (Math.floor((bass + n.key + 12 * e) / 12) - 1)]).filter(([e, l]) => { const o = Math.floor((bass + n.key + 12 * e) / 12) - 1; return o >= 1 && o <= 6; }), onChange: v => vozSet(n, { ex: Number(v) }) }))))),
+                React.createElement(Seccion, { t: "Sonido" }),
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+                    React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
+                    React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
+                    React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro })),
+                React.createElement("div", { style: { marginBottom: 10 } },
+                    React.createElement("button", { style: uiPill(false, { padding: "7px 16px" }), onClick: vozAcorde }, "\u25B6 Acorde (notas juntas)"),
+                    " ",
+                    React.createElement("span", { style: { fontSize: 11, color: "#8a8a8a", marginLeft: 6 } }, "El arpegio, abajo, sube nota por nota.")),
+                camAbajo,
+                React.createElement(Seccion, { t: "Cifrado" }),
+                React.createElement("p", { style: { fontSize: 11.5, color: "#8a8a8a", margin: "0 0 8px", lineHeight: 1.5 } }, "Copi\u00E1 este texto para compartir la forma (por ejemplo, para pas\u00E1rmela). Pegando uno, se carga el acorde y su distribuci\u00F3n."),
+                React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 } },
+                    React.createElement("input", { readOnly: true, value: vozCif, onFocus: e => e.target.select(), style: { ...inpS, flex: 1, minWidth: 210, fontFamily: "monospace", fontSize: 11 } }),
+                    React.createElement("button", { style: uiPill(false, { padding: "7px 14px" }), onClick: vozCopiar }, "\u29C9 Copiar")),
+                React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 6 } },
+                    React.createElement("input", { value: vozTxt, onChange: e => setVozTxt(e.target.value), placeholder: "Peg\u00E1 ac\u00E1 un cifrado (HM1|\u2026)", style: { ...inpS, flex: 1, minWidth: 210, fontFamily: "monospace", fontSize: 11 } }),
+                    React.createElement("button", { style: uiPill(false, { padding: "7px 14px" }), onClick: vozCargar }, "Cargar")),
+                vozMsg && React.createElement("p", { style: { fontSize: 11.5, color: "#8a8a8a", margin: "2px 0 0" } }, vozMsg),
+                React.createElement(Seccion, { t: "Todas las tonalidades" }),
+                React.createElement("p", { style: { fontSize: 11.5, color: "#8a8a8a", margin: "0 0 8px", lineHeight: 1.5 } }, "La misma forma en cada tonalidad. Toc\u00E1 una fila para verla en los teclados. \u2713 = se puede tocar en ese sentido del fuelle."),
+                React.createElement("div", { style: { overflowX: "auto" } },
+                    React.createElement("table", { style: { borderCollapse: "collapse", width: "100%" } },
+                        React.createElement("thead", null,
+                            React.createElement("tr", null,
+                                React.createElement("th", { style: th }, "Tonalidad"),
+                                React.createElement("th", { style: th }, "Bajo"),
+                                React.createElement("th", { style: th }, "Abriendo"),
+                                React.createElement("th", { style: th }, "Cerrando"))),
+                        React.createElement("tbody", null, VOZ_RAICES.map(r => {
+                            const pc = noteIdx(r), bs = 12 * (voz.bajoOct + 1) + pc, act = noteIdx(acorde.ac.root) === pc, tocables = vozNotas.filter(n => n.mano !== "-");
+                            const est = bel => { const f = tocables.filter(n => !dispo[bel][n.mano].has(bs + n.d)); return f.length ? React.createElement("span", { style: { color: "#c9a25a" } },
+                                "falta ",
+                                f.map(n => nom(bs + n.d)).join(", ")) : React.createElement("span", { style: { color: "#6b9c7c", fontWeight: 700 } }, "\u2713"); };
+                            return (React.createElement("tr", { key: r, onClick: () => acorde.set("root", r), style: { cursor: "pointer", background: act ? "#ffffff12" : "transparent" } },
+                                React.createElement("td", { style: { ...td, fontWeight: 700 } }, nombreLat(r)),
+                                React.createElement("td", { style: td },
+                                    nombreLat(r),
+                                    voz.bajoOct),
+                                React.createElement("td", { style: td }, est("abre")),
+                                React.createElement("td", { style: td }, est("cierra"))));
+                        }))))));
+        })(),
+        modo === "lineas" && (() => {
+            const manos = [...(view !== "derecha" ? [["L", "Mano izquierda", linL, leftBtns]] : []), ...(view !== "izquierda" ? [["R", "Mano derecha", linR, rightBtns]] : [])];
+            const maxL = Math.max(0, ...manos.map(m => m[2].length));
+            return (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
+                React.createElement("p", { className: "text-xs text-gray-500", style: { margin: "0 0 10px" } },
+                    LIN_TEXTO[linTipo],
+                    " Toc\u00E1 un bot\u00F3n (o eleg\u00ED un n\u00FAmero) para ver su l\u00EDnea completa; tocalo de nuevo para volver a ver todas."),
+                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginBottom: 12 } },
+                    React.createElement(Desplegable, { etiqueta: "Patr\u00F3n", valor: linTipo, opciones: LIN_TIPOS, onChange: setLinTipo }),
+                    React.createElement(Desplegable, { etiqueta: "R\u00F3tulo en los botones", valor: linRot, opciones: [["pos", "Número para contar (1, 2, 3…)"], ["nota", "Nombre de la nota"], ["no", "Sin rótulo"]], onChange: setLinRot })),
+                React.createElement("p", { style: { ...uiLabel, marginBottom: 6 } }, "L\u00EDnea"),
+                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 } },
+                    React.createElement("button", { style: uiPill(linSel < 0, { padding: "5px 12px" }), onClick: () => setLinSel(-1) }, "Todas"),
+                    Array.from({ length: maxL }, (_, i) => (React.createElement("button", { key: i, style: uiPill(linSel === i, { padding: "5px 12px", minWidth: 36 }), onClick: () => setLinSel(i) }, i + 1)))),
+                linSel >= 0 && manos.map(([h, tit, ls, bt]) => {
+                    const l = ls[linSel];
+                    if (!l)
+                        return (React.createElement("p", { key: h, style: { fontSize: 12, color: "#8a8a8a", margin: "0 0 8px" } },
+                            tit,
+                            ": no tiene una l\u00EDnea ",
+                            linSel + 1,
+                            " en este patr\u00F3n."));
+                    const by = Object.fromEntries(bt.map(b => [b.id, b])), its = l.ids.map(id => itemsMano([by[id]], bellows)[0]);
+                    return (React.createElement("div", { key: h, style: { borderTop: "1px solid #232326", paddingTop: 10, marginBottom: 10 } },
+                        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 } },
+                            React.createElement("p", { style: { margin: 0, fontSize: 13, color: "#ececec" } },
+                                React.createElement("b", null, tit),
+                                " \u00B7 ",
+                                l.nombre,
+                                " \u00B7 ",
+                                its.length,
+                                " ",
+                                its.length === 1 ? "botón" : "botones"),
+                            React.createElement("button", { style: uiPill(false, { padding: "6px 14px" }), onClick: () => linEscuchar(h) }, "\u25B6 Escuchar en orden")),
+                        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" } }, its.map((it, i) => {
+                            const col = nc(CHROMATIC[it.pc]);
+                            return (React.createElement("span", { key: it.b.id, style: { display: "contents" } },
+                                i > 0 && React.createElement("span", { style: { fontSize: 10.5, fontFamily: "monospace", color: "#8a8a8a" } }, (it.midi - its[i - 1].midi > 0 ? "+" : "") + (it.midi - its[i - 1].midi)),
+                                React.createElement("button", { onClick: () => tocarItem(it), title: "Tecla " + it.b.id, style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px 3px 4px", borderRadius: 999, cursor: "pointer", background: "#0e0e10", border: "1px solid #2c2c30", color: "#ececec" } },
+                                    React.createElement("span", { style: { width: 22, height: 22, borderRadius: "50%", background: col, color: txtSobre(col), display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, fontFamily: "monospace" } }, i + 1),
+                                    React.createElement("span", { style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: 13 } },
+                                        CROM_SIMPLE[CHROMATIC[it.pc]],
+                                        it.oct))));
+                        })),
+                        React.createElement("p", { style: { fontSize: 10.5, color: "#6a6a70", margin: "6px 0 0" } },
+                            "Los n\u00FAmeros entre las notas son los saltos en semitonos de un bot\u00F3n al siguiente (",
+                            bellows === "abre" ? "abriendo" : "cerrando",
+                            ").")));
+                })));
+        })(),
         modo === "forma" && (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
             React.createElement("p", { className: "text-xs text-gray-500 mb-3" },
                 "Toc\u00E1 el tablero para poner un c\u00EDrculo donde creas que va un bot\u00F3n. Toc\u00E1 un c\u00EDrculo para sacarlo y arrastralo para acomodarlo. Hacelo con la mano izquierda, la derecha o las dos. Al corregir, cada c\u00EDrculo cuenta como bien ubicado si queda cerca del bot\u00F3n que le toca (con el margen que elijas abajo; no hace falta que sea exacto): ",
@@ -3606,6 +4387,7 @@ function EntrenadorTab({ preset } = {}) {
             React.createElement("p", { style: uiLabel }, "Qu\u00E9 se pide"),
             React.createElement("div", { className: "flex gap-1.5 mt-2" }, [[false, "Solo la nota"], [true, "Nota y octava"]].map(([v, l]) => (React.createElement("button", { key: String(v), style: uiPill(pedirOct === v), onClick: () => setPedirOct(v) }, l)))))),
         modo === "acordes" && (React.createElement(React.Fragment, null,
+            acoVistas,
             React.createElement("p", { className: "text-xs text-gray-500 mb-2" }, "Arm\u00E1 el acorde (fundamental, tipo, s\u00E9ptima, extensiones) y marc\u00E1 en los teclados los botones que lo forman, con una mano o con las dos. Despu\u00E9s toc\u00E1 \"Corregir\". Pod\u00E9s ir sumando notas al acorde y seguir marcando."),
             React.createElement(ArmadorAcordes, { a: acorde, collapsible: false }))),
         React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10, alignItems: "center" } },
@@ -3616,9 +4398,40 @@ function EntrenadorTab({ preset } = {}) {
                 (modo === "acordes" || modo === "forma" || modo === "notas") && (React.createElement("button", { onClick: () => setReveal(r => !r), style: { padding: "6px 12px", borderRadius: 9, border: "1px solid #e6e6e6", background: reveal ? "#e6e6e6" : "transparent", color: reveal ? "#0a0a0a" : "#e6e6e6", fontWeight: 700, fontSize: 10, cursor: "pointer" } },
                     "\uD83D\uDC41 ",
                     reveal ? "Ocultar respuesta" : "Ver respuesta")),
-                modo !== "escalas" && React.createElement("button", { onClick: () => setChecked(true), style: { padding: "6px 14px", borderRadius: 9, border: "none", background: "#e6e6e6", color: "#0a0a0a", fontWeight: 800, fontSize: 11, cursor: "pointer" } }, "\u2713 Corregir"),
+                modo !== "escalas" && !esCam && modo !== "lineas" && React.createElement("button", { onClick: () => setChecked(true), style: { padding: "6px 14px", borderRadius: 9, border: "none", background: "#e6e6e6", color: "#0a0a0a", fontWeight: 800, fontSize: 11, cursor: "pointer" } }, "\u2713 Corregir"),
                 React.createElement("button", { onClick: reiniciarFuelle, style: { padding: "6px 12px", borderRadius: 9, border: "1px solid #2a2a2a", background: "transparent", color: "#8a8a8a", fontSize: 10, cursor: "pointer" } }, "\u27F3 Reiniciar"))),
-        React.createElement("div", { style: { marginBottom: 10, padding: "8px 12px", background: "#121212", border: "1px solid #333333", borderRadius: 10, display: "flex", gap: 16, flexWrap: "wrap", fontSize: 11 } }, modo === "forma" ? (React.createElement(React.Fragment, null,
+        React.createElement("div", { style: { marginBottom: 10, padding: "8px 12px", background: "#121212", border: "1px solid #333333", borderRadius: 10, display: "flex", gap: 16, flexWrap: "wrap", fontSize: 11 } }, esCam ? (React.createElement(React.Fragment, null,
+            React.createElement("span", { style: { color: "#8a8a8a" } },
+                modo === "voz" ? "Acorde" : modo === "arpegio" ? "Arpegio" : "Camino",
+                ": ",
+                React.createElement("b", { style: { color: "#e6e6e6" } }, modo === "voz" ? acorde.name : modo === "arpegio" ? acorde.name + " · " + (acoInvOk === 0 ? "fundamental" : acoInvOk + "ª inversión") : nombreLat(escRoot) + " " + camDef.nombre)),
+            React.createElement("span", { style: { color: "#8a8a8a" } },
+                "Fuelle: ",
+                React.createElement("b", { style: { color: "#e6e6e6" } }, bellows === "abre" ? "abriendo" : "cerrando")),
+            cam && React.createElement("span", { style: { color: "#8a8a8a" } },
+                "Izq.: ",
+                React.createElement("b", { style: { color: "#e6e6e6" } },
+                    cam.manos.L.nodos.length - cam.manos.L.faltan.length,
+                    "/",
+                    cam.manos.L.nodos.length),
+                " \u00B7 Der.: ",
+                React.createElement("b", { style: { color: "#e6e6e6" } },
+                    cam.manos.R.nodos.length - cam.manos.R.faltan.length,
+                    "/",
+                    cam.manos.R.nodos.length)))) : modo === "lineas" ? (React.createElement(React.Fragment, null,
+            React.createElement("span", { style: { color: "#8a8a8a" } },
+                "Patr\u00F3n: ",
+                React.createElement("b", { style: { color: "#e6e6e6" } }, LIN_TIPOS.find(t => t[0] === linTipo)[1])),
+            React.createElement("span", { style: { color: "#8a8a8a" } },
+                "Fuelle: ",
+                React.createElement("b", { style: { color: "#e6e6e6" } }, bellows === "abre" ? "abriendo" : "cerrando")),
+            React.createElement("span", { style: { color: "#8a8a8a" } },
+                "L\u00EDneas: ",
+                React.createElement("b", { style: { color: "#e6e6e6" } },
+                    "Izq. ",
+                    linL.length,
+                    " \u00B7 Der. ",
+                    linR.length)))) : modo === "forma" ? (React.createElement(React.Fragment, null,
             React.createElement("span", { style: { color: "#8a8a8a" } },
                 "C\u00EDrculos puestos: ",
                 React.createElement("b", { style: { color: "#e6e6e6" } }, formaPuestos),
@@ -3695,21 +4508,21 @@ function EntrenadorTab({ preset } = {}) {
             checked && faltanTones.length > 0 && React.createElement("span", { style: { color: "#8a8a8a" } },
                 "Faltan: ",
                 React.createElement("b", { style: { color: "#e6e6e6" } }, faltanTones.map(tn => tn.nombre).join(", ")))))),
-        React.createElement("div", { ref: wrapRef, style: { display: "flex", flexDirection: an.fila ? "row" : (disp.invertir ? "column-reverse" : "column"), gap: an.gap, alignItems: an.fila ? "flex-start" : "stretch", paddingBottom: 8 } },
-            (view === "ambas" || view === "izquierda") && (React.createElement("div", { style: { width: an.fila ? an.aL : "100%", flexShrink: 0 } },
+        React.createElement("div", { ref: wrapRef, style: { display: "flex", flexDirection: an.fila ? "row" : (disp.invertir ? "column-reverse" : "column"), gap: an.gap, alignItems: an.fila ? "flex-start" : "center", paddingBottom: 8 } },
+            (view === "ambas" || view === "izquierda") && (React.createElement("div", { style: { width: an.aL, flexShrink: 0 } },
                 React.createElement("p", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 6, letterSpacing: "0.12em" } },
                     "MANO IZQUIERDA \u00B7 ",
                     modo === "forma" ? `${formaPts.L.length} círculos` : `${leftBtns.length} botones`),
                 modo === "forma"
                     ? React.createElement(FormaCanvas, { real: leftBtns, pts: formaPts.L, onChange: (l) => setFormaH("L", l), checked: checked, reveal: reveal, grid: formaGrid, tol: formaTol, maxWidth: an.aL, maxScale: 3.6 })
-                    : React.createElement(PaintCanvas, { buttons: leftBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aL, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null }))),
-            (view === "ambas" || view === "derecha") && (React.createElement("div", { style: { width: an.fila ? an.aR : "100%", flexShrink: 0 } },
+                    : React.createElement(PaintCanvas, { buttons: leftBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aL, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null, flechas: esCam ? camFlechas("L") : modo === "lineas" ? linFlechas("L") : null }))),
+            (view === "ambas" || view === "derecha") && (React.createElement("div", { style: { width: an.aR, flexShrink: 0 } },
                 React.createElement("p", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 6, letterSpacing: "0.12em" } },
                     "MANO DERECHA \u00B7 ",
                     modo === "forma" ? `${formaPts.R.length} círculos` : `${rightBtns.length} botones`),
                 modo === "forma"
                     ? React.createElement(FormaCanvas, { real: rightBtns, pts: formaPts.R, onChange: (l) => setFormaH("R", l), checked: checked, reveal: reveal, grid: formaGrid, tol: formaTol, maxWidth: an.aR, maxScale: 3.6 })
-                    : React.createElement(PaintCanvas, { buttons: rightBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aR, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null })))),
+                    : React.createElement(PaintCanvas, { buttons: rightBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aR, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null, flechas: esCam ? camFlechas("R") : modo === "lineas" ? linFlechas("R") : null })))),
         modo === "colores" && React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "#121212", border: "1px solid #2a2a2a", borderRadius: 10 } },
             React.createElement("p", { style: { fontSize: 10, color: "#8a8a8a", marginBottom: 8, fontWeight: 700 } }, "\uD83D\uDCE4 MANDAR PARA REVISI\u00D3N"),
             React.createElement("p", { style: { fontSize: 10, color: "#555", marginBottom: 10, lineHeight: 1.5 } }, "La app todav\u00EDa no tiene un servidor donde juntar esto autom\u00E1ticamente. Por ahora: descarg\u00E1 el CSV o copi\u00E1 el resumen y mand\u00E1melo por WhatsApp o mail."),
@@ -4186,7 +4999,7 @@ function PanelIngresos({ org, guardar, card, peq }) {
             React.createElement("button", { style: peq, onClick: () => setAbierto(a => !a) }, abierto ? "Ocultar" : "Mostrar"),
             !urlOk && React.createElement("span", { style: { fontSize: 11, color: "#c9a25a" } }, "Sin configurar")),
         abierto && (React.createElement("div", { style: { marginTop: 10 } },
-            React.createElement("p", { style: { fontSize: 11.5, color: "#8a8a8a", lineHeight: 1.5, margin: "0 0 10px" } }, "Cuenta cu\u00E1ntas veces entra cada alumno y cu\u00E1ntas veces abre una tarea con \"Practicar\". No registra qu\u00E9 ejercicio hace ni cu\u00E1nto tiempo est\u00E1. Los alumnos lo ven aclarado en \"Mis tareas\". Esta direcci\u00F3n y clave son las de tu planilla de Google (hojas Alumnos e Ingresos)."),
+            React.createElement("p", { style: { fontSize: 11.5, color: "#8a8a8a", lineHeight: 1.5, margin: "0 0 10px" } }, "Cuenta cu\u00E1ntas veces entra cada alumno y cu\u00E1ntas veces abre una tarea con \"Practicar\". No registra qu\u00E9 ejercicio hace ni cu\u00E1nto tiempo est\u00E1. Esta direcci\u00F3n y clave son las de tu planilla de Google (hojas Alumnos e Ingresos)."),
             React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 } },
                 React.createElement("label", { style: { fontSize: 11, color: "#8a8a8a" } },
                     "Direcci\u00F3n del registro (termina en /exec)",
@@ -4591,7 +5404,7 @@ function MisTareasTab({ onPracticar }) {
                 e.indic && React.createElement("div", { style: { fontSize: 12.5, color: "#cfcfcf", marginTop: 8, whiteSpace: "pre-wrap" } },
                     "\uD83D\uDCDD ",
                     e.indic))))))),
-        React.createElement("p", { style: { fontSize: 11, color: "#6a6a6a" } }, "Lo que marc\u00E1s como hecho se guarda solo en este dispositivo; tu profesor no lo ve. Tu profesor s\u00ED puede ver cu\u00E1ntas veces entr\u00E1s y cu\u00E1ntas veces abr\u00EDs una tarea con \"Practicar\" (no qu\u00E9 ejercicio ni cu\u00E1nto tiempo).")));
+        React.createElement("p", { style: { fontSize: 11, color: "#6a6a6a" } }, "Lo que marc\u00E1s como hecho se guarda solo en este dispositivo; tu profesor no lo ve.")));
 }
 // ═══════════════════════════════════════════════════════════════════════════
 // ─── MODOS (transportables) y COLORES (lineal · circular · espiral) ──────────
@@ -5057,7 +5870,7 @@ function HarmoniaApp() {
                             React.createElement("h2", { className: "text-xl font-bold mb-1", style: { fontFamily: "'Libre Baskerville',serif" } },
                                 React.createElement("span", { style: { color: "#e6e6e6" } }, "\uD83C\uDFB5 Bandone\u00F3n"),
                                 React.createElement("span", { className: "text-gray-500 text-sm font-normal ml-2 italic" }, "Rheinische \u00B7 71 botones")),
-                            React.createElement("p", { className: "text-xs text-gray-500" }, "Presion\u00E1 botones para tocar y detectar acordes")),
+                            React.createElement("p", { className: "text-xs text-gray-500" }, "Toc\u00E1 los botones para escuchar. Con Marcar eleg\u00EDs notas sobre el teclado para armar un acorde y o\u00EDrlo completo.")),
                         React.createElement(BandoneonTab, null))),
                     tab === "entrenador" && React.createElement(EntrenadorTab, { preset: preset }),
                     tab === "organizador" && !window.__ALUMNO && React.createElement(OrganizadorTab, { onProbar: practicar }),
