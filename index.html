@@ -3839,6 +3839,10 @@ function EntrenadorTab({ preset } = {}) {
     const maxW = wrapWidth; // cada teclado usa todo el ancho (apilados), así se ven lo más grandes posible
     const disp = useDisposicion();
     const an = calcAnchos(wrapWidth, leftBtns, rightBtns, view === "ambas", disp.lado, isMobile);
+    // Pantallas anchas con teclados apilados o de una mano: los controles pasan a los márgenes (izquierda: recorrido; derecha: escala y sonido)
+    const kbW = view === "ambas" ? Math.max(an.aL, an.aR) : view === "izquierda" ? an.aL : an.aR;
+    const sideW = Math.floor((wrapWidth - kbW - 36) / 2);
+    const lateral = !isMobile && !an.fila && sideW >= 220 && (modo === "camino" || modo === "arpegio");
     const keyOf = useCallback((id) => `${id}|${bellows}`, [bellows]);
     const correctOf = useCallback((btn) => {
         const noteLat = bellows === "abre" ? btn.abre : btn.cierra;
@@ -4165,37 +4169,42 @@ function EntrenadorTab({ preset } = {}) {
     };
     const camNotaTxt = (nd) => nombreLat(nd.name) + octDeMidi(nd.midi);
     // Cabecera compartida de la pestaña Escalas: vista (Ver y escuchar / Practicar), tónica y escala
+    const escPills = (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" } },
+        React.createElement("button", { style: uiPill(modo === "camino", { padding: "7px 16px" }), onClick: () => setModo("camino") }, "\uD83E\uDDED Ver y escuchar"),
+        React.createElement("button", { style: uiPill(modo === "escalas", { padding: "7px 16px" }), onClick: () => setModo("escalas") }, "\u270B Practicar")));
+    const escSelects = (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+        React.createElement(Desplegable, { etiqueta: "T\u00F3nica", valor: escRoot, opciones: ACORDE_RAICES.map(x => [x, nombreLat(x)]), onChange: v => { setEscRoot(v); setEscStart(-1); } }),
+        React.createElement(Desplegable, { etiqueta: "Escala", valor: escTipo, opciones: modo === "camino" ? ESCALAS_HERO.map(e => [e.id, e.corto]) : ESC_ENT.map(e => [e.id, e.nombre]), onChange: setEscTipo })));
     const escCab = (React.createElement(React.Fragment, null,
-        React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" } },
-            React.createElement("button", { style: uiPill(modo === "camino", { padding: "7px 16px" }), onClick: () => setModo("camino") }, "\uD83E\uDDED Ver y escuchar"),
-            React.createElement("button", { style: uiPill(modo === "escalas", { padding: "7px 16px" }), onClick: () => setModo("escalas") }, "\u270B Practicar")),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
-            React.createElement(Desplegable, { etiqueta: "T\u00F3nica", valor: escRoot, opciones: ACORDE_RAICES.map(x => [x, nombreLat(x)]), onChange: v => { setEscRoot(v); setEscStart(-1); } }),
-            React.createElement(Desplegable, { etiqueta: "Escala", valor: escTipo, opciones: modo === "camino" ? ESCALAS_HERO.map(e => [e.id, e.corto]) : ESC_ENT.map(e => [e.id, e.nombre]), onChange: setEscTipo }))));
+        escPills,
+        escSelects));
     // Parte común de las vistas "Ver y escuchar": velocidad, escuchar, tira de notas por mano y avisos
-    const camAbajo = (React.createElement(React.Fragment, null,
+    const camControles = (React.createElement(React.Fragment, null,
         React.createElement("div", { className: "flex flex-wrap gap-3 items-center mb-3" },
             React.createElement("span", { style: uiLabel }, "Velocidad"),
             React.createElement("input", { type: "range", min: "30", max: "220", step: "1", value: camBpm, onChange: e => setCamBpm(Number(e.target.value)), style: { width: 170 } }),
             React.createElement("span", { style: { fontSize: 12, color: "#ececec", fontFamily: "monospace", minWidth: 74 } },
                 "\u2669 = ",
                 camBpm),
-            React.createElement("button", { style: uiPill(!!camSuena, { padding: "7px 16px" }), onClick: camSuena ? camParar : camEscuchar }, camSuena ? "■ Detener" : "▶ Escuchar")),
-        cam && [["L", "Mano izquierda"], ["R", "Mano derecha"]].map(([h, nombre]) => {
-            const m = cam.manos[h], nada = m.nodos.every(n => n.falta);
-            return (React.createElement("div", { key: h, style: { marginBottom: 10 } },
-                React.createElement("p", { style: { ...uiLabel, margin: "0 0 5px" } }, nombre),
-                React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } }, m.nodos.map(nd => nd.falta
-                    ? React.createElement("span", { key: nd.k, style: { fontSize: 11, color: "#6a6a6e", textDecoration: "line-through", border: "1px dashed #444", borderRadius: 8, padding: "4px 8px" } },
-                        "\u2715 ",
-                        camNotaTxt(nd))
-                    : React.createElement("button", { key: nd.k, onClick: () => tocarItem(nd.item), style: { border: "2px solid rgba(255,255,255,.35)", background: nc(CHROMATIC[nd.item.pc]), color: "#fff", textShadow: "0 1px 3px #000", borderRadius: 9, padding: "3px 8px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: "monospace" } },
-                        nd.lab !== undefined ? nd.lab : nd.k,
-                        " ",
-                        camNotaTxt(nd)))),
-                React.createElement("p", { style: { fontSize: 12, color: m.faltan.length ? "#c9a25a" : "#8a8a8a", margin: "6px 0 0", lineHeight: 1.5 } }, nada ? `No hay botones para este tramo ${bellows === "abre" ? "abriendo" : "cerrando"}.`
-                    : `${bellows === "abre" ? "Abriendo" : "Cerrando"}: ${m.faltan.length === 0 ? "completa" : "no tiene " + m.faltan.map(camNotaTxt).join(", ")}.`)));
-        })));
+            React.createElement("button", { style: uiPill(!!camSuena, { padding: "7px 16px" }), onClick: camSuena ? camParar : camEscuchar }, camSuena ? "■ Detener" : "▶ Escuchar"))));
+    const camTiras = (React.createElement(React.Fragment, null, cam && [["L", "Mano izquierda"], ["R", "Mano derecha"]].map(([h, nombre]) => {
+        const m = cam.manos[h], nada = m.nodos.every(n => n.falta);
+        return (React.createElement("div", { key: h, style: { marginBottom: 10 } },
+            React.createElement("p", { style: { ...uiLabel, margin: "0 0 5px" } }, nombre),
+            React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } }, m.nodos.map(nd => nd.falta
+                ? React.createElement("span", { key: nd.k, style: { fontSize: 11, color: "#6a6a6e", textDecoration: "line-through", border: "1px dashed #444", borderRadius: 8, padding: "4px 8px" } },
+                    "\u2715 ",
+                    camNotaTxt(nd))
+                : React.createElement("button", { key: nd.k, onClick: () => tocarItem(nd.item), style: { border: "2px solid rgba(255,255,255,.35)", background: nc(CHROMATIC[nd.item.pc]), color: "#fff", textShadow: "0 1px 3px #000", borderRadius: 9, padding: "3px 8px", cursor: "pointer", fontSize: 11, fontWeight: 800, fontFamily: "monospace" } },
+                    nd.lab !== undefined ? nd.lab : nd.k,
+                    " ",
+                    camNotaTxt(nd)))),
+            React.createElement("p", { style: { fontSize: 12, color: m.faltan.length ? "#c9a25a" : "#8a8a8a", margin: "6px 0 0", lineHeight: 1.5 } }, nada ? `No hay botones para este tramo ${bellows === "abre" ? "abriendo" : "cerrando"}.`
+                : `${bellows === "abre" ? "Abriendo" : "Cerrando"}: ${m.faltan.length === 0 ? "completa" : "no tiene " + m.faltan.map(camNotaTxt).join(", ")}.`)));
+    })));
+    const camAbajo = (React.createElement(React.Fragment, null,
+        camControles,
+        camTiras));
     // Cabecera de la vista de acordes: Ver y escuchar / Armar
     const acoVistas = (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" } },
         React.createElement("button", { style: uiPill(modo === "arpegio", { padding: "7px 16px" }), onClick: () => setModo("arpegio") }, "\uD83E\uDDED Ver y escuchar"),
@@ -4292,6 +4301,77 @@ function EntrenadorTab({ preset } = {}) {
     const pill = (active, v = "orange") => uiPill(active);
     if (!leftBtns.length)
         return React.createElement("div", { style: { color: "#555", padding: 20, fontSize: 13 } }, "Cargando...");
+    const camRecorrido = (React.createElement(React.Fragment, null,
+        React.createElement(Seccion, { t: "Recorrido" }),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 8 } },
+            React.createElement(Desplegable, { etiqueta: "Mano izquierda desde", valor: camOctL, opciones: rg.L.map(o => [o, nombreLat(escRoot) + o]), onChange: v => setCamOctL(Number(v)) }),
+            React.createElement(Desplegable, { etiqueta: "Mano derecha desde", valor: camOctR, opciones: rg.R.map(o => [o, nombreLat(escRoot) + o]), onChange: v => setCamOctR(Number(v)) }),
+            React.createElement(Desplegable, { etiqueta: "Largo", valor: camLong, opciones: [[1, "1 octava"], [2, "2 octavas"]], onChange: v => setCamLong(Number(v)) })),
+        React.createElement("p", { style: { ...uiLabel, textTransform: "none", letterSpacing: 0, color: "#8a8a8a", fontWeight: 500, margin: "0 0 12px", fontSize: 11 } },
+            "Izquierda: ",
+            nombreLat(escRoot),
+            camOctL,
+            " \u2192 ",
+            nombreLat(escRoot),
+            camOctL + camLong,
+            " \u00B7 Derecha: ",
+            nombreLat(escRoot),
+            camOctR,
+            " \u2192 ",
+            nombreLat(escRoot),
+            camOctR + camLong)));
+    const camSonido = (React.createElement(React.Fragment, null,
+        React.createElement(Seccion, { t: "Sonido" }),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+            React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
+            React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
+            React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro }))));
+    const arpAcorde = (React.createElement(React.Fragment, null,
+        React.createElement(Seccion, { t: "Acorde" }),
+        React.createElement(SelectoresAcorde, { a: acorde }),
+        React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 } },
+            React.createElement("span", { style: { fontSize: 14, fontFamily: "'Libre Baskerville',serif", fontWeight: 700, color: "#e6e6e6" } }, acorde.name),
+            acorde.tones.map(t => (React.createElement("span", { key: t.pc, style: { display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 } },
+                React.createElement("span", { style: { minWidth: 34, padding: "4px 6px", borderRadius: 8, background: nc(t.pc), color: txtSobre(nc(t.pc)), fontFamily: "serif", fontWeight: 900, fontSize: 12, textAlign: "center", border: "2px solid rgba(255,255,255,.2)" } }, t.nombre),
+                React.createElement("span", { style: { fontSize: 9, fontFamily: "monospace", color: "#8a8a8a" } }, t.lab))))),
+        acorde.ac.und === "11" && (acorde.ac.base === "M" || acorde.ac.base === "aug") && React.createElement("p", { style: { fontSize: 11, color: "#c9a25a", margin: "0 0 10px", lineHeight: 1.5 } }, "La oncena natural queda a un semitono de la tercera mayor y choca con ella. Suele usarse como suspendido (Tipo sus4) o como oncena aumentada (#11).")));
+    const arpRecorrido = (React.createElement(React.Fragment, null,
+        React.createElement(Seccion, { t: "Recorrido" }),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 8 } },
+            React.createElement(Desplegable, { etiqueta: "Inversi\u00F3n", valor: acoInvOk, opciones: [[0, "Fundamental"], [1, "1ª inversión"], [2, "2ª inversión"], [3, "3ª inversión"]].filter(([v]) => v <= Math.max(0, nTonosArp - 1)), onChange: v => setAcoInv(Number(v)) }),
+            React.createElement(Desplegable, { etiqueta: "Ra\u00EDz, mano izquierda", valor: camOctL, opciones: rg.L.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => setCamOctL(Number(v)) }),
+            React.createElement(Desplegable, { etiqueta: "Ra\u00EDz, mano derecha", valor: camOctR, opciones: rg.R.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => setCamOctR(Number(v)) }),
+            React.createElement(Desplegable, { etiqueta: "Largo", valor: camLong, opciones: [[1, "1 octava"], [2, "2 octavas"]], onChange: v => setCamLong(Number(v)) })),
+        React.createElement("p", { style: { ...uiLabel, textTransform: "none", letterSpacing: 0, color: "#8a8a8a", fontWeight: 500, margin: "0 0 12px", fontSize: 11 } },
+            "La ra\u00EDz parte en ",
+            nombreLat(acorde.ac.root),
+            camOctL,
+            " (izquierda) y ",
+            nombreLat(acorde.ac.root),
+            camOctR,
+            " (derecha); en las inversiones el arpegio empieza m\u00E1s arriba, en la nota que corresponda. Las inversiones usan las notas del acorde, no las tensiones.")));
+    const arpSonido = (React.createElement(React.Fragment, null,
+        React.createElement(Seccion, { t: "Sonido" }),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
+            React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
+            React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
+            React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro }))));
+    const asideS = { flex: "1 1 0", minWidth: 0, background: "#121212", border: "1px solid #2a2a2a", borderRadius: 12, padding: "12px 14px" };
+    const lateralIzq = modo === "camino" ? React.createElement(React.Fragment, null,
+        camRecorrido,
+        camTiras) : React.createElement(React.Fragment, null,
+        arpRecorrido,
+        camTiras);
+    const lateralDer = modo === "camino"
+        ? React.createElement(React.Fragment, null,
+            React.createElement(Seccion, { t: "Escala" }),
+            escSelects,
+            camSonido,
+            React.createElement("div", { style: { marginTop: 2 } }, camControles))
+        : React.createElement(React.Fragment, null,
+            arpAcorde,
+            arpSonido,
+            React.createElement("div", { style: { marginTop: 2 } }, camControles));
     return (React.createElement("div", { style: { fontFamily: UI_FONT } },
         React.createElement("div", { className: "mb-4" },
             React.createElement("h2", { className: "text-xl font-bold mb-1", style: { fontFamily: "'Libre Baskerville',serif" } },
@@ -4342,71 +4422,22 @@ function EntrenadorTab({ preset } = {}) {
                 React.createElement("p", { className: "text-xs text-gray-500", style: { margin: 0 } }, "Eleg\u00ED una escala y un tramo: se dibuja el camino nota por nota en los dos teclados. Con el bot\u00F3n Abre / Cierra cambi\u00E1s el sentido del fuelle. Cada mano tiene su propia octava de partida, as\u00ED pod\u00E9s poner, por ejemplo, la izquierda en 2 y la derecha en 3."),
                 React.createElement("button", { style: uiPill(camLey, { padding: "6px 12px", flexShrink: 0 }), onClick: () => setCamLey(v => !v) }, "\u2753 C\u00F3mo leerlo")),
             camLey && React.createElement(LeyendaCamino, null),
-            escCab,
-            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "0 28px", alignItems: "start" } },
-                React.createElement("div", null,
-                    React.createElement(Seccion, { t: "Recorrido" }),
-                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 8 } },
-                        React.createElement(Desplegable, { etiqueta: "Mano izquierda desde", valor: camOctL, opciones: rg.L.map(o => [o, nombreLat(escRoot) + o]), onChange: v => setCamOctL(Number(v)) }),
-                        React.createElement(Desplegable, { etiqueta: "Mano derecha desde", valor: camOctR, opciones: rg.R.map(o => [o, nombreLat(escRoot) + o]), onChange: v => setCamOctR(Number(v)) }),
-                        React.createElement(Desplegable, { etiqueta: "Largo", valor: camLong, opciones: [[1, "1 octava"], [2, "2 octavas"]], onChange: v => setCamLong(Number(v)) })),
-                    React.createElement("p", { style: { ...uiLabel, textTransform: "none", letterSpacing: 0, color: "#8a8a8a", fontWeight: 500, margin: "0 0 12px", fontSize: 11 } },
-                        "Izquierda: ",
-                        nombreLat(escRoot),
-                        camOctL,
-                        " \u2192 ",
-                        nombreLat(escRoot),
-                        camOctL + camLong,
-                        " \u00B7 Derecha: ",
-                        nombreLat(escRoot),
-                        camOctR,
-                        " \u2192 ",
-                        nombreLat(escRoot),
-                        camOctR + camLong)),
-                React.createElement("div", null,
-                    React.createElement(Seccion, { t: "Sonido" }),
-                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
-                        React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
-                        React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
-                        React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro })))),
-            camAbajo)),
+            lateral ? escPills : escCab,
+            lateral ? null : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "0 28px", alignItems: "start" } },
+                React.createElement("div", null, camRecorrido),
+                React.createElement("div", null, camSonido))),
+            lateral ? null : camAbajo)),
         modo === "arpegio" && (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
             React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } },
                 React.createElement("p", { className: "text-xs text-gray-500", style: { margin: 0 } }, "Arm\u00E1 el acorde y mir\u00E1 su arpegio sobre los dos teclados: siempre arranca desde la ra\u00EDz y lo pod\u00E9s invertir. Los suspendidos est\u00E1n en \"Tipo\" y las tensiones en Novena, Oncena y Trecena. Con el bot\u00F3n Abre / Cierra cambi\u00E1s el sentido del fuelle."),
                 React.createElement("button", { style: uiPill(camLey, { padding: "6px 12px", flexShrink: 0 }), onClick: () => setCamLey(v => !v) }, "\u2753 C\u00F3mo leerlo")),
             camLey && React.createElement(LeyendaCamino, { arpegio: true }),
             acoVistas,
-            React.createElement(Seccion, { t: "Acorde" }),
-            React.createElement(SelectoresAcorde, { a: acorde }),
-            React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 } },
-                React.createElement("span", { style: { fontSize: 14, fontFamily: "'Libre Baskerville',serif", fontWeight: 700, color: "#e6e6e6" } }, acorde.name),
-                acorde.tones.map(t => (React.createElement("span", { key: t.pc, style: { display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 } },
-                    React.createElement("span", { style: { minWidth: 34, padding: "4px 6px", borderRadius: 8, background: nc(t.pc), color: txtSobre(nc(t.pc)), fontFamily: "serif", fontWeight: 900, fontSize: 12, textAlign: "center", border: "2px solid rgba(255,255,255,.2)" } }, t.nombre),
-                    React.createElement("span", { style: { fontSize: 9, fontFamily: "monospace", color: "#8a8a8a" } }, t.lab))))),
-            acorde.ac.und === "11" && (acorde.ac.base === "M" || acorde.ac.base === "aug") && React.createElement("p", { style: { fontSize: 11, color: "#c9a25a", margin: "0 0 10px", lineHeight: 1.5 } }, "La oncena natural queda a un semitono de la tercera mayor y choca con ella. Suele usarse como suspendido (Tipo sus4) o como oncena aumentada (#11)."),
-            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "0 28px", alignItems: "start" } },
-                React.createElement("div", null,
-                    React.createElement(Seccion, { t: "Recorrido" }),
-                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 8 } },
-                        React.createElement(Desplegable, { etiqueta: "Inversi\u00F3n", valor: acoInvOk, opciones: [[0, "Fundamental"], [1, "1ª inversión"], [2, "2ª inversión"], [3, "3ª inversión"]].filter(([v]) => v <= Math.max(0, nTonosArp - 1)), onChange: v => setAcoInv(Number(v)) }),
-                        React.createElement(Desplegable, { etiqueta: "Ra\u00EDz, mano izquierda", valor: camOctL, opciones: rg.L.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => setCamOctL(Number(v)) }),
-                        React.createElement(Desplegable, { etiqueta: "Ra\u00EDz, mano derecha", valor: camOctR, opciones: rg.R.map(o => [o, nombreLat(acorde.ac.root) + o]), onChange: v => setCamOctR(Number(v)) }),
-                        React.createElement(Desplegable, { etiqueta: "Largo", valor: camLong, opciones: [[1, "1 octava"], [2, "2 octavas"]], onChange: v => setCamLong(Number(v)) })),
-                    React.createElement("p", { style: { ...uiLabel, textTransform: "none", letterSpacing: 0, color: "#8a8a8a", fontWeight: 500, margin: "0 0 12px", fontSize: 11 } },
-                        "La ra\u00EDz parte en ",
-                        nombreLat(acorde.ac.root),
-                        camOctL,
-                        " (izquierda) y ",
-                        nombreLat(acorde.ac.root),
-                        camOctR,
-                        " (derecha); en las inversiones el arpegio empieza m\u00E1s arriba, en la nota que corresponda. Las inversiones usan las notas del acorde, no las tensiones.")),
-                React.createElement("div", null,
-                    React.createElement(Seccion, { t: "Sonido" }),
-                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 12 } },
-                        React.createElement(Desplegable, { etiqueta: "Sentido al escuchar", valor: camSent, opciones: [["sube", "↑ Sube"], ["baja", "↓ Baja"], ["ida", "↕ Sube y baja"]], onChange: setCamSent }),
-                        React.createElement(Desplegable, { etiqueta: "Figura", valor: camFig, opciones: FIGURAS.map(f => [f.id, f.nombre]), onChange: setCamFig }),
-                        React.createElement(Desplegable, { etiqueta: "Metr\u00F3nomo", valor: camMetro, opciones: [["no", "Apagado"], ["negra", "Negra"], ["blanca", "Blanca"], ["redonda", "Redonda"]], onChange: setCamMetro })))),
-            camAbajo)),
+            lateral ? null : arpAcorde,
+            lateral ? null : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))", gap: "0 28px", alignItems: "start" } },
+                React.createElement("div", null, arpRecorrido),
+                React.createElement("div", null, arpSonido))),
+            lateral ? null : camAbajo)),
         modo === "voz" && (() => {
             const bass = 12 * (voz.bajoOct + 1) + acorde.rootIdx, nOtros = Math.max(0, acorde.tones.length - 1), nom = m => CROM_SIMPLE[CHROMATIC[m % 12]] + (Math.floor(m / 12) - 1);
             const th = { textAlign: "left", fontSize: 10, letterSpacing: "0.1em", color: "#7c7c82", fontWeight: 600, padding: "6px 8px", textTransform: "uppercase" }, td = { padding: "6px 8px", fontSize: 12, borderTop: "1px solid #1c1c1f" };
@@ -4730,21 +4761,24 @@ function EntrenadorTab({ preset } = {}) {
             checked && faltanTones.length > 0 && React.createElement("span", { style: { color: "#8a8a8a" } },
                 "Faltan: ",
                 React.createElement("b", { style: { color: "#e6e6e6" } }, faltanTones.map(tn => tn.nombre).join(", ")))))),
-        React.createElement("div", { ref: wrapRef, style: { display: "flex", flexDirection: an.fila ? "row" : (disp.invertir ? "column-reverse" : "column"), gap: an.gap, alignItems: an.fila ? "flex-start" : "center", paddingBottom: 8 } },
-            (view === "ambas" || view === "izquierda") && (React.createElement("div", { style: { width: an.aL, flexShrink: 0 } },
-                React.createElement("p", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 6, letterSpacing: "0.12em" } },
-                    "MANO IZQUIERDA \u00B7 ",
-                    modo === "forma" ? `${formaPts.L.length} círculos` : `${leftBtns.length} botones`),
-                modo === "forma"
-                    ? React.createElement(FormaCanvas, { real: leftBtns, pts: formaPts.L, onChange: (l) => setFormaH("L", l), checked: checked, reveal: reveal, grid: formaGrid, tol: formaTol, maxWidth: an.aL, maxScale: 3.6 })
-                    : React.createElement(PaintCanvas, { buttons: leftBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aL, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null, flechas: esCam ? camFlechas("L") : modo === "lineas" ? linFlechas("L") : null }))),
-            (view === "ambas" || view === "derecha") && (React.createElement("div", { style: { width: an.aR, flexShrink: 0 } },
-                React.createElement("p", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 6, letterSpacing: "0.12em" } },
-                    "MANO DERECHA \u00B7 ",
-                    modo === "forma" ? `${formaPts.R.length} círculos` : `${rightBtns.length} botones`),
-                modo === "forma"
-                    ? React.createElement(FormaCanvas, { real: rightBtns, pts: formaPts.R, onChange: (l) => setFormaH("R", l), checked: checked, reveal: reveal, grid: formaGrid, tol: formaTol, maxWidth: an.aR, maxScale: 3.6 })
-                    : React.createElement(PaintCanvas, { buttons: rightBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aR, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null, flechas: esCam ? camFlechas("R") : modo === "lineas" ? linFlechas("R") : null })))),
+        React.createElement("div", { ref: wrapRef, style: lateral ? { display: "flex", gap: 18, alignItems: "flex-start", paddingBottom: 8, width: "100%", minWidth: 0 } : { display: "flex", flexDirection: an.fila ? "row" : (disp.invertir ? "column-reverse" : "column"), gap: an.gap, alignItems: an.fila ? "flex-start" : "center", paddingBottom: 8 } },
+            lateral && React.createElement("aside", { style: asideS }, lateralIzq),
+            React.createElement("div", { style: lateral ? { display: "flex", flexDirection: disp.invertir ? "column-reverse" : "column", gap: an.gap, alignItems: "center", width: kbW, flexShrink: 0 } : { display: "contents" } },
+                (view === "ambas" || view === "izquierda") && (React.createElement("div", { style: { width: an.aL, flexShrink: 0 } },
+                    React.createElement("p", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 6, letterSpacing: "0.12em" } },
+                        "MANO IZQUIERDA \u00B7 ",
+                        modo === "forma" ? `${formaPts.L.length} círculos` : `${leftBtns.length} botones`),
+                    modo === "forma"
+                        ? React.createElement(FormaCanvas, { real: leftBtns, pts: formaPts.L, onChange: (l) => setFormaH("L", l), checked: checked, reveal: reveal, grid: formaGrid, tol: formaTol, maxWidth: an.aL, maxScale: 3.6 })
+                        : React.createElement(PaintCanvas, { buttons: leftBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aL, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null, flechas: esCam ? camFlechas("L") : modo === "lineas" ? linFlechas("L") : null }))),
+                (view === "ambas" || view === "derecha") && (React.createElement("div", { style: { width: an.aR, flexShrink: 0 } },
+                    React.createElement("p", { style: { fontSize: 11, color: "#8a8a8a", marginBottom: 6, letterSpacing: "0.12em" } },
+                        "MANO DERECHA \u00B7 ",
+                        modo === "forma" ? `${formaPts.R.length} círculos` : `${rightBtns.length} botones`),
+                    modo === "forma"
+                        ? React.createElement(FormaCanvas, { real: rightBtns, pts: formaPts.R, onChange: (l) => setFormaH("R", l), checked: checked, reveal: reveal, grid: formaGrid, tol: formaTol, maxWidth: an.aR, maxScale: 3.6 })
+                        : React.createElement(PaintCanvas, { buttons: rightBtns, guesses: guesses, keyOf: keyOf, checked: checked, correctOf: correctOf, onTapButton: tapBtn, maxWidth: an.aR, maxScale: 3.6, activeId: modo === "escalas" ? info === null || info === void 0 ? void 0 : info.btn.id : picker === null || picker === void 0 ? void 0 : picker.btn.id, chord: chordProps, escala: scaleProps, rotulo: modo === "colores" ? notaOct : null, flechas: esCam ? camFlechas("R") : modo === "lineas" ? linFlechas("R") : null })))),
+            lateral && React.createElement("aside", { style: asideS }, lateralDer)),
         modo === "colores" && React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "#121212", border: "1px solid #2a2a2a", borderRadius: 10 } },
             React.createElement("p", { style: { fontSize: 10, color: "#8a8a8a", marginBottom: 8, fontWeight: 700 } }, "\uD83D\uDCE4 MANDAR PARA REVISI\u00D3N"),
             React.createElement("p", { style: { fontSize: 10, color: "#555", marginBottom: 10, lineHeight: 1.5 } }, "La app todav\u00EDa no tiene un servidor donde juntar esto autom\u00E1ticamente. Por ahora: descarg\u00E1 el CSV o copi\u00E1 el resumen y mand\u00E1melo por WhatsApp o mail."),
