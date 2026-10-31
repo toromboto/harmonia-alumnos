@@ -150,8 +150,10 @@ const uiPill = (on, extra = {}) => ({
     ...extra,
 });
 // Estilos por función: modos (uiPill, blanco) · vista del teclado (uiVista) · reproducir (uiPlay) · herramientas (uiTool) · limpiar/soltar (uiGhost)
-const uiPlay = (on, extra = {}) => ({ fontFamily: UI_FONT, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em", padding: "6px 14px", borderRadius: 999, cursor: "pointer", lineHeight: 1.2,
-    border: `1px solid ${on ? "#c9776f" : "#5fb8a6"}`, background: on ? "#3a1d1b" : "#10302b", color: on ? "#f3c8c3" : "#c4f2e6", ...extra });
+const uiPlay = (on, extra = {}) => ({ fontFamily: UI_FONT, fontSize: 12.5, fontWeight: 800, letterSpacing: "0.02em", padding: "7px 16px", borderRadius: 999, cursor: "pointer", lineHeight: 1.2,
+    border: `1px solid ${on ? "#f08a82" : "#4fe0c4"}`, background: on ? "#f2837a" : "#2dd4bf", color: "#04211c", boxShadow: `0 0 0 3px ${on ? "rgba(242,131,122,.22)" : "rgba(45,212,191,.22)"}`, ...extra });
+const uiMarcar = (on, extra = {}) => ({ fontFamily: UI_FONT, fontSize: 12, fontWeight: 800, letterSpacing: "0.02em", padding: "6px 14px", borderRadius: 999, cursor: "pointer", lineHeight: 1.2,
+    border: "1px solid #f2c14e", background: on ? "#f2c14e" : "#2c2310", color: on ? "#251a02" : "#f6d57f", boxShadow: on ? "0 0 0 3px rgba(242,193,78,.25)" : "0 0 0 2px rgba(242,193,78,.12)", ...extra });
 const uiVista = (on, extra = {}) => ({ fontFamily: UI_FONT, fontSize: 11.5, fontWeight: 600, padding: "5px 11px", borderRadius: 8, cursor: "pointer", lineHeight: 1.2,
     border: `1px solid ${on ? "#8f8f98" : "transparent"}`, background: on ? "#2a2a30" : "transparent", color: on ? "#ffffff" : "#8a8a92", ...extra });
 const uiTool = (on, extra = {}) => ({ fontFamily: UI_FONT, fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 7, cursor: "pointer", lineHeight: 1.2,
@@ -1567,7 +1569,7 @@ function DisponibilidadAcorde({ tones, leftBtns, rightBtns, bellows, voz }) {
             React.createElement("div", { className: "flex flex-wrap gap-1.5 items-center" },
                 React.createElement("button", { style: uiPlay(false, { padding: "6px 14px" }), onClick: () => voz.res.notas.forEach((n, i) => setTimeout(() => playBand(CHROMATIC[n.pc], n.oct), i * 45)) }, "\u25B6 Tocar este voicing"),
                 React.createElement("button", { style: uiPill(voz.solo, { padding: "6px 14px" }), onClick: () => voz.setSolo(!voz.solo) }, voz.solo ? "Mostrando solo estas teclas" : "Resaltar solo estas teclas"),
-                voz.onMarcar && voz.res.notas.length > 0 && React.createElement("button", { style: uiPill(false, { padding: "6px 14px" }), onClick: voz.onMarcar, title: "Pasa estas notas a Notas marcadas, para escucharlas y modificarlas sobre el teclado" }, "\u25CE Marcar estas teclas")),
+                voz.onMarcar && voz.res.notas.length > 0 && React.createElement("button", { style: uiMarcar(false), onClick: voz.onMarcar, title: "Pasa estas notas a Notas marcadas, para escucharlas y modificarlas sobre el teclado" }, "\u25CE Marcar estas teclas")),
             React.createElement("p", { style: { fontSize: 10.5, color: "#6a6a70", margin: "8px 0 0", lineHeight: 1.5 } }, voz.mano === "izq" ? "Mano izquierda: el bajo es la fundamental más grave; la séptima va justo encima y el resto del acorde desde el Do3. Ejemplo: La menor = La1 (bajo) + Do3 + Mi3; con séptima, Sol2 entre el bajo y el Do3."
                 : "Mano derecha: las notas del acorde de abajo hacia arriba desde el Do3. Cada inversión pone una nota distinta en la base.")))));
 }
@@ -2129,6 +2131,80 @@ function analizarAcorde(pcs, bajoPc, opt = {}) {
     return { ...elegido, alts: alts.slice(0, 3) };
 }
 function nombreAcordePcs(pcs, bajoPc, raiz) { const r = analizarAcorde(pcs, bajoPc, { raiz }); return r ? r.nombre : null; }
+// ─── Escucha por micrófono: detector de varias notas por espectro, acotado a las notas que el teclado puede producir ───
+function micEstimar(mag, sr, N, cands, maxN) {
+    const binHz = sr / N, nb = mag.length;
+    const res = Float32Array.from(mag);
+    const win = (f) => { const k = f / binHz; return [Math.max(1, Math.floor(k * 0.985 - 0.5)), Math.min(nb - 2, Math.ceil(k * 1.015 + 0.5))]; };
+    const peak = (f) => { const [a, b] = win(f); let m = 0; for (let i = a; i <= b; i++)
+        if (res[i] > m)
+            m = res[i]; return m; };
+    let maxAll = 0;
+    for (let i = Math.floor(40 / binHz); i < Math.min(nb, Math.floor(3000 / binHz)); i++)
+        if (res[i] > maxAll)
+            maxAll = res[i];
+    if (maxAll < 1e-3)
+        return [];
+    const W = [1, .7, .5, .35, .25, .18], salida = [];
+    let primero = 0;
+    const puntaje = new Map();
+    const score = (m) => {
+        const f = 440 * Math.pow(2, (m - 69) / 12);
+        if (f < 55 || f > 1800)
+            return 0;
+        const p = [];
+        for (let h = 1; h <= 6; h++) {
+            p.push(f * h > 4000 ? 0 : peak(f * h));
+        }
+        let s = 0;
+        for (let h = 0; h < 6; h++)
+            s += W[h] * p[h];
+        s *= Math.min(1, 0.15 + 2.5 * p[0] / Math.max(p[0], p[1], p[2], 1e-9)); // la fundamental pesa, pero puede ser débil
+        return s;
+    };
+    for (let it = 0; it < maxN; it++) {
+        let best = null, bs = 0;
+        const sc = new Map();
+        for (const m of cands) {
+            if (salida.includes(m))
+                continue;
+            const s = score(m);
+            sc.set(m, s);
+            if (s > bs) {
+                bs = s;
+                best = m;
+            }
+        }
+        if (best === null)
+            break;
+        // si la octava de abajo explica casi igual de bien, es esa (las lengüetas duplican la octava de arriba)
+        const baja = best - 12;
+        if (cands.has(baja)) {
+            const sb = sc.has(baja) ? sc.get(baja) : score(baja);
+            if (sb >= 0.8 * bs) {
+                best = baja;
+                bs = sb;
+            }
+        }
+        if (it === 0) {
+            if (bs < 0.6 * maxAll)
+                break;
+            primero = bs;
+        }
+        else if (bs < 0.4 * primero)
+            break;
+        salida.push(best);
+        const f = 440 * Math.pow(2, (best - 69) / 12);
+        for (let h = 1; h <= 8; h++) {
+            if (f * h > 4000)
+                break;
+            const [a, b] = win(f * h);
+            for (let i = a; i <= b; i++)
+                res[i] *= 0.03;
+        }
+    }
+    return salida.sort((a, b) => a - b);
+}
 function PanelMarcadas({ marcadas, marcar, onRemove, onClear }) {
     const orden = [...marcadas].sort((a, b) => a.midi - b.midi || a.orden - b.orden);
     const nombre = (m) => nombreLat(RAIZ_NOM[m.pc]);
@@ -2175,7 +2251,11 @@ function BandoneonTab() {
     const [pressedL, setPressedL] = useState([]);
     const [pressedR, setPressedR] = useState([]);
     const [isListening, setIsListening] = useState(false);
-    const [heardNote, setHeardNote] = useState("");
+    const [heardMidis, setHeardMidis] = useState([]);
+    const [micModo, setMicModo] = useState("acorde"); // nota | acorde
+    const [micMano, setMicMano] = useState("ambas"); // ambas | izq | der
+    const [micOct, setMicOct] = useState(0); // ajuste de octava del micrófono
+    const [micExacta, setMicExacta] = useState(true); // iluminar por octava exacta o solo por nombre
     const [errorAudio, setErrorAudio] = useState("");
     const [showSaved, setShowSaved] = useState(false);
     const [showImport, setShowImport] = useState(false);
@@ -2203,106 +2283,6 @@ function BandoneonTab() {
         }
         catch { }
     }, []);
-    // Micrófono YIN
-    const NOTES_ENG_MEMO = useMemo(() => NOTES_ENG, []);
-    const ENG_TO_LAT_MEMO = useMemo(() => ENG_TO_LAT, []);
-    useEffect(() => {
-        if (!isListening) {
-            setHeardNote("");
-            return;
-        }
-        // Refs para garantizar cleanup aunque el componente se desmonte
-        let audioCtx = null;
-        let stream = null;
-        let rafId = null;
-        let alive = true; // flag para cancelar tick si el efecto se limpió
-        async function start() {
-            var _a;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                if (!alive) {
-                    stream.getTracks().forEach(t => t.stop());
-                    return;
-                }
-                const AC = window.AudioContext || (window.webkitAudioContext);
-                audioCtx = new AC();
-                if (audioCtx.state === "suspended")
-                    await audioCtx.resume();
-                if (!alive) {
-                    audioCtx.close();
-                    stream.getTracks().forEach(t => t.stop());
-                    return;
-                }
-                const src = audioCtx.createMediaStreamSource(stream);
-                const analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 2048;
-                src.connect(analyser);
-                const buf = new Float32Array(analyser.fftSize);
-                const detect = YIN({ sampleRate: audioCtx.sampleRate || 44100 });
-                function tick() {
-                    if (!alive)
-                        return; // no seguir si el efecto fue limpiado
-                    analyser.getFloatTimeDomainData(buf);
-                    const pitch = detect(buf);
-                    if (pitch && pitch > 50 && pitch < 2000) {
-                        const noteNum = 12 * (Math.log(pitch / 440) / Math.log(2)) + 69;
-                        const midiRnd = Math.round(noteNum);
-                        const eng = NOTES_ENG[midiRnd % 12];
-                        const octave = Math.floor(midiRnd / 12) - 1;
-                        const lat = ENG_TO_LAT[eng] || "DO";
-                        setHeardNote(lat + octave);
-                    }
-                    else {
-                        setHeardNote("");
-                    }
-                    rafId = requestAnimationFrame(tick);
-                }
-                tick();
-            }
-            catch (err) {
-                if (alive) {
-                    setErrorAudio("Error de micrófono: " + ((_a = err === null || err === void 0 ? void 0 : err.message) !== null && _a !== void 0 ? _a : "permisos denegados"));
-                    setIsListening(false);
-                }
-            }
-        }
-        start();
-        return () => {
-            alive = false; // detiene el tick inmediatamente
-            if (rafId)
-                cancelAnimationFrame(rafId);
-            if (stream)
-                stream.getTracks().forEach(t => t.stop());
-            if (audioCtx && audioCtx.state !== "closed")
-                audioCtx.close();
-        };
-    }, [isListening]);
-    // IDs iluminados por mic
-    // heardNote es "SOL3" (nota+octava) — iluminar solo el botón con esa nota en esa octava
-    const heardIdsL = useMemo(() => {
-        if (!heardNote)
-            return [];
-        const octMapL = bellows === "abre" ? OCT_L_OPEN : OCT_L_CLOSE;
-        return leftBtns
-            .filter(b => {
-            var _a;
-            const nota = bellows === "abre" ? b.abre : b.cierra;
-            return (nota + ((_a = octMapL[b.id]) !== null && _a !== void 0 ? _a : "")) === heardNote;
-        })
-            .map(b => b.id);
-    }, [heardNote, bellows, leftBtns]);
-    const heardIdsR = useMemo(() => {
-        if (!heardNote)
-            return [];
-        const octMapR = bellows === "abre" ? OCT_R_OPEN : OCT_R_CLOSE;
-        return rightBtns
-            .filter(b => {
-            var _a;
-            const nota = bellows === "abre" ? b.abre : b.cierra;
-            return (nota + ((_a = octMapR[b.id]) !== null && _a !== void 0 ? _a : "")) === heardNote;
-        })
-            .map(b => b.id);
-    }, [heardNote, bellows, rightBtns]);
     // Notas activas
     const activeNotes = useMemo(() => {
         const octL = bellows === "abre" ? OCT_L_OPEN : OCT_L_CLOSE;
@@ -2430,6 +2410,101 @@ function BandoneonTab() {
     }, [stopNote]);
     // Corta todo lo que esté sonando si el componente se desmonta
     useEffect(() => () => stopAllNotes(), [stopAllNotes]);
+    // ─── Escucha física: varias notas a la vez, acotadas a lo que el teclado puede producir ───
+    const micCandsH = useMemo(() => {
+        const set = new Set(), add = (btns) => btns.forEach(b => { const lat = bellows === "abre" ? b.abre : b.cierra, pc = noteIdxB(LAT[lat] || lat); if (pc < 0)
+            return; set.add(12 * (getOct(b, bellows) + 1) + pc - 12 * micOct); });
+        if (micMano !== "der")
+            add(leftBtns);
+        if (micMano !== "izq")
+            add(rightBtns);
+        return set;
+    }, [leftBtns, rightBtns, bellows, micMano, micOct, getOct]);
+    const micRef = useRef({});
+    micRef.current = { modo: micModo, cands: micCandsH, shift: micOct };
+    useEffect(() => {
+        if (!isListening) {
+            setHeardMidis([]);
+            return;
+        }
+        let audioCtx = null, stream = null, rafId = null, alive = true, ultimo = 0;
+        const hist = [];
+        async function start() {
+            var _a;
+            try {
+                // sin control automático de ganancia, supresión de ruido ni cancelación de eco: alteran el sonido sostenido
+                stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false });
+                if (!alive) {
+                    stream.getTracks().forEach(t => t.stop());
+                    return;
+                }
+                const AC = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AC();
+                if (audioCtx.state === "suspended")
+                    await audioCtx.resume();
+                if (!alive) {
+                    audioCtx.close();
+                    stream.getTracks().forEach(t => t.stop());
+                    return;
+                }
+                const src = audioCtx.createMediaStreamSource(stream), analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 16384;
+                analyser.smoothingTimeConstant = 0.3;
+                analyser.minDecibels = -110;
+                analyser.maxDecibels = -5;
+                src.connect(analyser);
+                const N = analyser.fftSize, db = new Float32Array(N / 2), mag = new Float32Array(N / 2);
+                function tick(t) {
+                    if (!alive)
+                        return;
+                    rafId = requestAnimationFrame(tick);
+                    if (t - ultimo < 70)
+                        return;
+                    ultimo = t;
+                    analyser.getFloatFrequencyData(db);
+                    for (let i = 0; i < db.length; i++)
+                        mag[i] = Math.pow(10, db[i] / 20);
+                    const { modo, cands, shift } = micRef.current;
+                    hist.push(micEstimar(mag, audioCtx.sampleRate, N, cands, modo === "nota" ? 1 : 5));
+                    if (hist.length > 6)
+                        hist.shift();
+                    const cuenta = new Map();
+                    hist.forEach(a => a.forEach(m => cuenta.set(m, (cuenta.get(m) || 0) + 1)));
+                    const necesito = Math.min(4, Math.ceil(hist.length * 0.6));
+                    const fin = [...cuenta].filter(([, c]) => c >= necesito).map(([m]) => m + 12 * shift).sort((x, y) => x - y);
+                    setHeardMidis(prev => (prev.length === fin.length && prev.every((v, i) => v === fin[i])) ? prev : fin);
+                }
+                rafId = requestAnimationFrame(tick);
+            }
+            catch (err) {
+                if (alive) {
+                    setErrorAudio("Error de micrófono: " + ((_a = err === null || err === void 0 ? void 0 : err.message) !== null && _a !== void 0 ? _a : "permisos denegados"));
+                    setIsListening(false);
+                }
+            }
+        }
+        start();
+        return () => { alive = false; if (rafId)
+            cancelAnimationFrame(rafId); if (stream)
+            stream.getTracks().forEach(t => t.stop()); if (audioCtx && audioCtx.state !== "closed")
+            audioCtx.close(); };
+    }, [isListening]);
+    const heardPcs = useMemo(() => new Set(heardMidis.map(m => ((m % 12) + 12) % 12)), [heardMidis]);
+    const heardIdsDe = (btns) => {
+        if (!heardMidis.length)
+            return [];
+        return btns.filter(b => {
+            const lat = bellows === "abre" ? b.abre : b.cierra, pc = noteIdxB(LAT[lat] || lat);
+            if (pc < 0)
+                return false;
+            return micExacta ? heardMidis.includes(12 * (getOct(b, bellows) + 1) + pc) : heardPcs.has(pc);
+        }).map(b => b.id);
+    };
+    const heardIdsL = useMemo(() => micMano === "der" ? [] : heardIdsDe(leftBtns), [heardMidis, micExacta, micMano, bellows, leftBtns, getOct]);
+    const heardIdsR = useMemo(() => micMano === "izq" ? [] : heardIdsDe(rightBtns), [heardMidis, micExacta, micMano, bellows, rightBtns, getOct]);
+    const heardNotas = heardMidis.map(m => ({ m, txt: nombreLat(RAIZ_NOM[((m % 12) + 12) % 12]) + (Math.floor(m / 12) - 1), pc: ((m % 12) + 12) % 12 }));
+    const heardAcorde = (micModo === "acorde" && heardPcs.size >= 2) ? nombreAcordePcs([...heardPcs], heardMidis[0] % 12) : null;
+    const heardTxt = heardNotas.map(n => n.txt).join(" · ");
     // ─── MARCAR: elegir notas sobre el teclado para armar un acorde ───────────
     const [marcar, setMarcar] = useState(false);
     const [marks, setMarks] = useState({ abre: [], cierra: [] });
@@ -2529,13 +2604,21 @@ function BandoneonTab() {
     const bMic = (React.createElement("div", { style: cardS },
         React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, minWidth: 0 } },
-                React.createElement("div", { style: { width: 9, height: 9, borderRadius: "50%", background: isListening ? "#e6e6e6" : "#2c2c30", boxShadow: isListening ? "0 0 8px #e6e6e6" : "none", flexShrink: 0 } }),
+                React.createElement("div", { style: { width: 9, height: 9, borderRadius: "50%", background: isListening ? "#2dd4bf" : "#2c2c30", boxShadow: isListening ? "0 0 8px #2dd4bf" : "none", flexShrink: 0 } }),
                 React.createElement("div", null,
                     React.createElement("p", { style: { ...uiLabel, margin: 0 } }, "Escucha f\u00EDsica"),
-                    React.createElement("p", { style: { fontSize: 11, color: "#7c7c82", margin: "2px 0 0" } }, "Toc\u00E1 tu instrumento: las teclas con esa nota brillan en blanco."))),
-            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } },
-                isListening && (React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: heardNote ? "#e6e6e6" : "#555", minWidth: 50, textAlign: "center" } }, heardNote ? heardNote.replace(/(\d+)$/, "") + " " + (heardNote.match(/\d+$/) || [""])[0] : "...")),
-                React.createElement("button", { onClick: () => { setIsListening(p => !p); setErrorAudio(""); }, style: uiPill(isListening, { padding: "6px 14px" }) }, isListening ? "✕ Apagar mic" : "🎙️ Escuchar"))),
+                    React.createElement("p", { style: { fontSize: 11, color: "#7c7c82", margin: "2px 0 0" } }, "Toc\u00E1 tu instrumento: las teclas con esas notas brillan en blanco."))),
+            React.createElement("button", { onClick: () => { setIsListening(p => !p); setErrorAudio(""); }, style: uiPlay(isListening, { padding: "6px 14px" }) }, isListening ? "■ Apagar mic" : "🎙️ Escuchar")),
+        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10, alignItems: "flex-end" } },
+            React.createElement(Desplegable, { ancho: 104, etiqueta: "Reconoce", valor: micModo, opciones: [["nota", "Una nota"], ["acorde", "Acordes"]], onChange: setMicModo }),
+            React.createElement(Desplegable, { ancho: 100, etiqueta: "Mano", valor: micMano, opciones: [["ambas", "Ambas"], ["izq", "Izquierda"], ["der", "Derecha"]], onChange: setMicMano }),
+            React.createElement(Desplegable, { ancho: 72, etiqueta: "Octava", valor: micOct, opciones: [[-1, "−1"], [0, "0"], [1, "+1"]], onChange: v => setMicOct(Number(v)) }),
+            React.createElement(Desplegable, { ancho: 124, etiqueta: "Teclas", valor: micExacta ? "ex" : "nom", opciones: [["ex", "Octava exacta"], ["nom", "Solo el nombre"]], onChange: v => setMicExacta(v === "ex") })),
+        isListening && (React.createElement("div", { style: { marginTop: 10, padding: "8px 10px", borderRadius: 10, background: "#0e0e10", border: "1px solid #26262a", minHeight: 36 } }, heardNotas.length === 0
+            ? React.createElement("span", { style: { fontSize: 12, color: "#6a6a70" } }, "Escuchando\u2026 toc\u00E1 una nota sostenida.")
+            : React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" } },
+                heardNotas.map(n => { const col = nc(CHROMATIC[n.pc]); return (React.createElement("span", { key: n.m, style: { padding: "2px 9px", borderRadius: 999, background: col, color: txtSobre(col), fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: 13 } }, n.txt)); }),
+                heardAcorde && React.createElement("b", { style: { marginLeft: 6, fontFamily: "'Libre Baskerville',serif", fontSize: 16, color: "#ececec" } }, heardAcorde)))),
         errorAudio && React.createElement("p", { style: { margin: "8px 0 0", fontSize: 11, color: "#d98f88" } },
             "\u26A0 ",
             errorAudio)));
@@ -2561,15 +2644,16 @@ function BandoneonTab() {
                 React.createElement(ControlesDisposicion, { d: disp, isMobile: isMobile })),
             React.createElement(GrupoCtl, { t: "Marcar notas" },
                 React.createElement("div", { style: segS },
-                    React.createElement("button", { style: uiTool(marcar, { padding: "5px 14px", fontSize: 11.5 }), onClick: () => { stopAllNotes(); setPressedL([]); setPressedR([]); setMarcar(v => !v); }, title: "Con Marcar activo, tocar una tecla la agrega o la saca del acorde" },
+                    React.createElement("button", { style: uiMarcar(marcar), onClick: () => { stopAllNotes(); setPressedL([]); setPressedR([]); setMarcar(v => !v); }, title: "Con Marcar activo, tocar una tecla la agrega o la saca del acorde" },
                         "\u25CE Marcar",
                         marksB.length ? ` · ${marksB.length}` : ""))),
             React.createElement("button", { onClick: () => { stopAllNotes(); setPressedL([]); setPressedR([]); }, title: "Soltar todas las teclas", style: { ...uiGhost, marginLeft: "auto" } }, "\u2715 Soltar")),
-        React.createElement("div", { style: { minHeight: 40, marginBottom: 6 } }, (activeNotes.length > 0 || heardNote) && (React.createElement("div", { style: { padding: isMobile ? "6px 10px" : "6px 12px", background: "#121214", border: "1px solid #26262a", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 5 } },
+        React.createElement("div", { style: { minHeight: 40, marginBottom: 6 } }, (activeNotes.length > 0 || heardMidis.length > 0) && (React.createElement("div", { style: { padding: isMobile ? "6px 10px" : "6px 12px", background: "#121214", border: "1px solid #26262a", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 5 } },
             React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap", flex: "1 1 auto" } },
-                heardNote && (React.createElement("span", { style: { padding: "2px 8px", borderRadius: 20, background: "#e6e6e622", border: "1px solid #e6e6e6", color: "#e6e6e6", fontWeight: 700, fontSize: isMobile ? 10 : 11 } },
+                heardMidis.length > 0 && (React.createElement("span", { style: { padding: "2px 8px", borderRadius: 20, background: "#2dd4bf22", border: "1px solid #2dd4bf", color: "#7ff0dd", fontWeight: 700, fontSize: isMobile ? 10 : 11 } },
                     "\uD83C\uDF99\uFE0F ",
-                    heardNote)),
+                    heardTxt,
+                    heardAcorde ? " → " + heardAcorde : "")),
                 activeNotes.map(n => {
                     const notaPura = n.replace(/\d+$/, "");
                     const oct = (n.match(/\d+$/) || [""])[0];
@@ -2973,61 +3057,45 @@ const PasoCard = ({ n, titulo, children }) => (React.createElement("div", { clas
         React.createElement("p", { className: "text-sm font-bold mb-1", style: { color: "#d4d4d4" } }, titulo),
         React.createElement("p", { className: "text-xs text-gray-400 leading-relaxed" }, children))));
 // ─── Estructura del libro: partes y capítulos ────────────────────────────────
-const CAPITULOS = [
-    { parte: "Parte I — Fundamentos", id: "cap0", titulo: "Cap. 0 — El código de color", body: (React.createElement(React.Fragment, null,
+const CAPITULOS = [];
+// Capítulos que ven los alumnos: solo lo técnico del temperamento cromático. El manual completo (CAPITULOS) queda en el Organizador.
+const CAPITULOS_TEC = [
+    { parte: "El método", id: "cap0", titulo: "El código de color", body: (React.createElement(React.Fragment, null,
             React.createElement("div", { className: "rounded-xl p-4 mb-4 border", style: { background: "#0a0a0a", borderColor: "#333333" } },
                 React.createElement("p", { className: "text-[10px] uppercase tracking-widest mb-2", style: { color: "#8a8a8a" } }, "Antes de empezar"),
                 React.createElement("p", { className: "text-sm text-gray-300 leading-relaxed" }, "Antes de que este sistema te ahorre un solo segundo de c\u00E1lculo, te va a pedir algo: que te aprendas doce colores de memoria, con la misma seriedad con la que en alg\u00FAn momento te aprendiste el nombre de las doce notas. Esto no es gratis, y vale la pena decirlo as\u00ED, sin vueltas, en la primera p\u00E1gina: hay una inversi\u00F3n inicial antes de que aparezca la ganancia. Cualquier m\u00E9todo serio la tiene \u2014el solfeo, la digitaci\u00F3n, las escalas\u2014 y este no es la excepci\u00F3n.")),
-            React.createElement(CapP, null, "Lo que s\u00ED cambia es qu\u00E9 est\u00E1s memorizando. No est\u00E1s memorizando teor\u00EDa todav\u00EDa. Est\u00E1s memorizando una paleta: doce parches de color, cada uno con un nombre de nota al lado. Nada m\u00E1s. La teor\u00EDa llega despu\u00E9s, cap\u00EDtulo a cap\u00EDtulo, apoyada en esa memorizaci\u00F3n \u2014 pero si lleg\u00E1s al cap\u00EDtulo de acordes sin tener el color automatizado, vas a estar leyendo colores en vez de reconoci\u00E9ndolos, y ah\u00ED el sistema entero pierde su funci\u00F3n."),
+            React.createElement(CapP, null, "Lo que s\u00ED cambia es qu\u00E9 est\u00E1s memorizando. No est\u00E1s memorizando teor\u00EDa todav\u00EDa. Est\u00E1s memorizando una paleta: doce parches de color, cada uno con un nombre de nota al lado. Nada m\u00E1s. La teor\u00EDa llega despu\u00E9s, paso a paso, apoyada en esa memorizaci\u00F3n \u2014 pero si lleg\u00E1s a los acordes sin tener el color automatizado, vas a estar leyendo colores en vez de reconoci\u00E9ndolos, y ah\u00ED el sistema entero pierde su funci\u00F3n."),
             React.createElement(CapH3, null, "El orden en que conviene aprenderlo"),
-            React.createElement(CapP, null, "Este libro presenta la paleta en tres pasos, cada uno con un prop\u00F3sito distinto."),
+            React.createElement(CapP, null, "Se presenta la paleta en tres pasos, cada uno con un prop\u00F3sito distinto."),
             React.createElement(PasoCard, { n: "1", titulo: "Primero, una tira" }, "Las doce notas en fila, igual que las teclas de un piano o de un bandone\u00F3n desplegadas en l\u00EDnea recta. Es la forma m\u00E1s directa de un primer contacto \u2014 no hay \u00E1ngulos que leer, no hay geometr\u00EDa que entender todav\u00EDa. Solo doce colores, uno al lado del otro, cada uno con su nombre."),
-            React.createElement(PasoCard, { n: "2", titulo: "Despu\u00E9s, la rueda" }, "Las mismas doce notas, ahora en c\u00EDrculo. Ac\u00E1 aparece algo que la tira no pod\u00EDa mostrar: que las notas no son una lista que termina, sino un ciclo que vuelve sobre s\u00ED mismo \u2014 la relaci\u00F3n circular entre semitonos que vas a necesitar m\u00E1s adelante para entender intervalos, el c\u00EDrculo de quintas, y la geometr\u00EDa de los acordes del cap\u00EDtulo 8."),
+            React.createElement(PasoCard, { n: "2", titulo: "Despu\u00E9s, la rueda" }, "Las mismas doce notas, ahora en c\u00EDrculo. Ac\u00E1 aparece algo que la tira no pod\u00EDa mostrar: que las notas no son una lista que termina, sino un ciclo que vuelve sobre s\u00ED mismo \u2014 la relaci\u00F3n circular entre semitonos que vas a necesitar m\u00E1s adelante para entender intervalos, el c\u00EDrculo de quintas, y la geometr\u00EDa de los acordes."),
             React.createElement(PasoCard, { n: "3", titulo: "Por \u00FAltimo, tarjetas de estudio" },
                 "Una nota por vez, con su color y su enarm\u00F3nico (por ejemplo, Do sostenido y Re bemol comparten color). Este es el paso de memorizaci\u00F3n activa propiamente dicho: repetici\u00F3n, no explicaci\u00F3n. Es donde el c\u00F3digo deja de ser informaci\u00F3n y empieza a ser reflejo. (Pod\u00E9s practicar esto en la pesta\u00F1a ",
                 React.createElement("b", null, "Colores"),
-                " de la app: toc\u00E1 cada tarjeta para escuchar la nota mientras fij\u00E1s el color.)"),
-            React.createElement(CapH3, null, "Un aviso sobre lo que este c\u00F3digo puede generar"),
-            React.createElement(CapNota, null, "Una vez que la asociaci\u00F3n color-nota est\u00E1 bien afianzada, puede pasar algo que vale la pena anticipar: empezar a \"ver\" notas en colores que no tienen nada que ver con este sistema \u2014 una partitura sin colorear, un sem\u00E1foro, cualquier superficie con estos doce tonos. No es un efecto grave ni motivo de preocupaci\u00F3n, pero s\u00ED una fricci\u00F3n real que otros m\u00E9todos de asociaci\u00F3n fuerte tambi\u00E9n generan. Este libro no lo esconde: es el precio de automatizar bien una asociaci\u00F3n. Y como con cualquier escalera, el objetivo final es soltarla \u2014 llegar a un punto donde el color ya no hace falta, porque la nota se reconoce sola."))) },
-    { parte: "Parte I — Fundamentos", id: "cap5", titulo: "Cap. 5 — De la pentatónica al cromatismo", body: (React.createElement(React.Fragment, null,
+                " de la app: toc\u00E1 cada tarjeta para escuchar la nota mientras fij\u00E1s el color.)"))) },
+    { parte: "El método", id: "tec5", titulo: "De la pentatónica al cromatismo", body: (React.createElement(React.Fragment, null,
             React.createElement(CapP, null, "Los cinco colores de origen no se quedan aislados: se combinan entre s\u00ED, por mezcla directa, para generar los siete colores restantes y completar la rueda de doce."),
-            React.createElement(CapP, null, "Do (azul) y Re (verde) se mezclan y dan Do sostenido, celeste \u2014 una mezcla v\u00E1lida en dos sentidos a la vez, porque el celeste, a diferencia del resto, es tambi\u00E9n un color espectral real: existe f\u00EDsicamente en la luz, entre el azul y el verde. Re (verde) y Mi (marr\u00F3n) dan Re sostenido, un oliva que resulta de la mezcla real entre ambos. Mi (marr\u00F3n) y Sol (amarillo) dan, en dos pasos, Fa y Fa sostenido \u2014un dorado que se aclara a medida que se acerca al amarillo\u2014. Sol (amarillo) y La (rojo) se mezclan y dan Sol sostenido, naranja. Y por \u00FAltimo, La (rojo) y Do (azul) se mezclan y dan Si, violeta \u2014que a su vez, mezclado otra vez con La, da Sib, rosa\u2014."),
-            React.createElement(CapP, null, "El marr\u00F3n merece una aclaraci\u00F3n aparte, porque a primera vista parece \"romper\" el espectro: no existe una banda de luz que produzca marr\u00F3n. T\u00E9cnicamente es un naranja oscurecido y desaturado, un color que solo existe por mezcla o por sombra, nunca en un prisma. Eso significa que ubicarlo donde lo ubica la leyenda \u2014entre el verde y el amarillo\u2014 no viola ninguna ley \u00F3ptica: el marr\u00F3n nunca tuvo un lugar \"correcto\" en el espectro que este sistema est\u00E9 alterando."),
-            React.createElement(CapFig, { caption: "Figura 5. Las cinco notas ancla y las mezclas que completan la rueda de doce." },
-                React.createElement(RuedaCromatica, { highlight: ["C", "D", "E", "G", "A"] })),
+            React.createElement(CapP, null, "Do (azul) y Re (verde) se mezclan y dan Do sostenido, celeste \u2014un color espectral real, entre el azul y el verde\u2014. Re (verde) y Mi (marr\u00F3n) dan Re sostenido, un oliva. Mi (marr\u00F3n) y Sol (amarillo) dan, en dos pasos, Fa y Fa sostenido, un dorado que se aclara a medida que se acerca al amarillo. Sol (amarillo) y La (rojo) dan Sol sostenido, naranja. La (rojo) y Do (azul) dan Si, violeta, que mezclado otra vez con La da Si bemol, rosa."),
+            React.createElement(CapP, null, "El marr\u00F3n no existe como banda de luz: es un naranja oscurecido y desaturado, un color que solo aparece por mezcla o por sombra, nunca en un prisma. Por eso ubicarlo entre el verde y el amarillo no viola ninguna ley \u00F3ptica."),
+            React.createElement(CapFig, { caption: "Las cinco notas ancla y las mezclas que completan la rueda de doce." },
+                React.createElement(RuedaCromatica, { highlight: ["C", "D", "E", "G", "A"] })))) },
+    { parte: "El método", id: "tec7", titulo: "El temperamento cromático", body: (React.createElement(React.Fragment, null,
+            React.createElement(CapP, null, "La m\u00FAsica occidental temperada no usa las proporciones \"puras\" de la afinaci\u00F3n natural \u2014la serie arm\u00F3nica\u2014. Las ajusta, deliberadamente, para dividir la octava en doce semitonos exactamente iguales. Es una decisi\u00F3n pr\u00E1ctica: se sacrifica la pureza ac\u00FAstica para ganar un sistema funcional y transportable a cualquier tonalidad."),
+            React.createElement(CapP, null, "El c\u00F3digo de color hace el mismo gesto: no deriva los colores de una f\u00F3rmula f\u00EDsica, los ajusta con criterio expl\u00EDcito para que la paleta de doce sea funcional y se pueda transportar a las doce tonalidades."),
+            React.createElement(CapH3, null, "Por qu\u00E9 no hay una correspondencia f\u00EDsica directa"),
             React.createElement(CapP, null,
-                "Y ac\u00E1 aparece un cierre que no estaba planeado, pero que sostiene el argumento con una precisi\u00F3n que vale la pena se\u00F1alar: Fa y Si, las dos notas sin historia propia, est\u00E1n exactamente a distancia de tritono entre s\u00ED \u2014seis semitonos\u2014. El tritono es, en m\u00FAsica, el intervalo de mayor tensi\u00F3n e inestabilidad. Y en este sistema de color, es tambi\u00E9n el \u00FAnico intervalo cuya relaci\u00F3n crom\u00E1tica es un ",
-                React.createElement("b", null, "complementario exacto"),
-                " \u2014el par de colores de m\u00E1ximo contraste posible en toda la rueda\u2014. Las dos notas que llegaron despu\u00E9s, sin mito de origen, resultan ser las que generan, al mismo tiempo, la m\u00E1xima tensi\u00F3n arm\u00F3nica y el m\u00E1ximo contraste visual. No hizo falta forzarlo: es consecuencia directa de aplicar la misma l\u00F3gica hasta el final."))) },
-    { parte: "Parte II — El sistema en profundidad", id: "cap7", titulo: "Cap. 7 — El doble temperamento", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Este es el cap\u00EDtulo bisagra: todo lo anterior construye hacia ac\u00E1, y todo lo que sigue lo aplica."),
-            React.createElement(CapP, null, "La m\u00FAsica occidental temperada no usa las proporciones \"puras\" de la afinaci\u00F3n natural \u2014la serie arm\u00F3nica\u2014. Las ajusta, deliberadamente, para poder dividir la octava en doce semitonos exactamente iguales. Es una decisi\u00F3n pr\u00E1ctica, no un descubrimiento: se sacrifica la pureza ac\u00FAstica para ganar un sistema funcional y transportable a cualquier tonalidad."),
-            React.createElement(CapP, null, "Este libro hace, con el color, exactamente el mismo gesto. Y para demostrarlo \u2014no solo para afirmarlo\u2014 se pusieron a prueba tres intentos distintos de encontrar una correspondencia f\u00EDsica real entre sonido y color, y los tres, de manera consistente, fallaron:"),
+                React.createElement("b", { className: "text-gray-200" }, "El espectro de luz no es una octava."),
+                " El espectro visible ocupa apenas menos de una octava, as\u00ED que ning\u00FAn mapeo directo de la frecuencia del sonido a la frecuencia de la luz hace entrar las doce notas completas en el rango visible: algo siempre queda afuera, en infrarrojo o ultravioleta."),
             React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Primero"),
-                ", el espectro de luz real no tiene el mismo tama\u00F1o que una octava musical \u2014ocupa apenas menos de una octava\u2014, as\u00ED que ning\u00FAn mapeo directo de frecuencia de sonido a frecuencia de luz logra que las doce notas entren completas en el rango visible: algo siempre queda afuera, en infrarrojo o ultravioleta."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Segundo"),
-                ", incluso usando la t\u00E9cnica v\u00E1lida de elevar una frecuencia de audio cuarenta octavas para llevarla al rango de luz visible, el resultado no coincide con los colores de este sistema \u2014 de hecho invierte varias asignaciones (Do termina siendo infrarrojo, invisible; La termina siendo naranja, no rojo)."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Tercero"),
-                ", se compararon las propiedades f\u00EDsicas reales de las doce piedras preciosas elegidas para cada nota \u2014densidad, dureza, \u00EDndice de refracci\u00F3n\u2014 contra la frecuencia sonora de cada nota. La correlaci\u00F3n estad\u00EDstica fue pr\u00E1cticamente cero en los tres casos."),
-            React.createElement(CapNota, null,
-                "Tres intentos, tres resultados negativos, siempre de la misma manera. Y ese patr\u00F3n repetido es, en s\u00ED mismo, el argumento central de todo el libro: si alguno de esos tres intentos hubiera arrojado una correlaci\u00F3n fuerte, ser\u00EDa motivo de sospecha, no de celebraci\u00F3n. Que los tres fallen limpiamente confirma que este es un sistema ",
-                React.createElement("b", null, "temperado"),
-                ": construido con criterios expl\u00EDcitos y defendibles, no derivado de una f\u00F3rmula de la naturaleza. Y sin embargo, el sistema funciona \u2014porque nunca pretendi\u00F3 ser un hallazgo. Pretendi\u00F3, desde el principio, ser un lenguaje."),
-            React.createElement(CapH3, null, "Un anclaje real, sin necesidad de leyenda"),
-            React.createElement(CapP, null, "Todo lo anterior son intentos de correspondencia f\u00EDsica que fallaron, y este libro los cuenta igual porque el fracaso ordenado es parte del argumento. Pero hay una sola nota, en todo el sistema, que s\u00ED tiene un anclaje f\u00EDsico real, verificable y ajeno a cualquier leyenda: el La. No por ninguna propiedad de su color \u2014la idea de que el rojo sea \"el primer color que percibe el ojo\" circula bastante, pero no resiste una revisi\u00F3n m\u00EDnima: seg\u00FAn qu\u00E9 estudio se consulte, el primer matiz en aparecer en el umbral de percepci\u00F3n es el amarillo, no el rojo, y no hay acuerdo real entre las fuentes."),
-            React.createElement(CapP, null, "Lo que el La s\u00ED tiene, y que ninguna otra nota de la escala tiene, es un anclaje universalmente estandarizado: los 440 Hz del diapas\u00F3n, la referencia de afinaci\u00F3n de la m\u00FAsica occidental (norma ISO 16), el punto del que parte cualquier instrumento que se afina hoy. No es una leyenda ni una elecci\u00F3n est\u00E9tica \u2014 es, probablemente, el hecho m\u00E1s verificable de todo este libro."),
-            React.createElement(CapP, null, "Y en este sistema, el La ya es rojo desde el cap\u00EDtulo 4 \u2014la vida, la sangre, a la distancia\u2014, sin que hiciera falta ajustar nada para lograrlo. Que la \u00FAnica nota con anclaje f\u00EDsico real termine siendo tambi\u00E9n el color de mayor intensidad simb\u00F3lica de la leyenda no es una prueba de nada, pero s\u00ED es una segunda capa de sentido que vale la pena se\u00F1alar."))) },
+                React.createElement("b", { className: "text-gray-200" }, "Subir el sonido hasta la luz tampoco coincide."),
+                " Aun elevando una frecuencia de audio cuarenta octavas para llevarla al rango visible, el resultado no coincide con los colores del sistema e invierte varias asignaciones: Do queda en infrarrojo, invisible, y La queda naranja, no rojo."),
+            React.createElement(CapNota, null, "Como la f\u00EDsica no entrega una correspondencia, el sistema es temperado: est\u00E1 construido con criterios expl\u00EDcitos y defendibles, no derivado de una f\u00F3rmula de la naturaleza. No pretende ser un hallazgo, sino un lenguaje."))) },
 ];
-// Capítulos que ven los alumnos: cómo se llega a la distribución de los doce colores y el temperamento. El resto queda en el manual completo del Organizador.
-const CAP_PUBLICOS = ["cap0", "cap5", "cap7"];
 // ─── Componente de la pestaña "El Código" ────────────────────────────────────
 function ElCodigoTab({ irA, completo = false } = {}) {
     const [vista, setVista] = useState("metodo"); // metodo | entrenar
     const [capIdx, setCapIdx] = useState(0);
-    const CAPS = completo ? CAPITULOS : CAPITULOS.filter(c => CAP_PUBLICOS.includes(c.id));
+    const CAPS = completo ? CAPITULOS : CAPITULOS_TEC;
     const cap = CAPS[capIdx];
     const partes = [...new Set(CAPS.map(c => c.parte))];
     return (React.createElement("div", { className: "stagger" },
