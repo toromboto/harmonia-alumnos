@@ -2811,7 +2811,7 @@ const NOMBRES_PC = ["Do", "Do♯ / Re♭", "Re", "Re♯ / Mi♭", "Mi", "Fa", "F
 const RAICES_HERO = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 function PaletaRueda({ compacta = false }) {
     const [root, setRoot] = useState("C");
-    const [escId, setEscId] = useState("mayor");
+    const [escId, setEscId] = useState("crom");
     const [playing, setPlaying] = useState(null);
     const [sel, setSel] = useState(null);
     const [romano] = useRomanos();
@@ -2989,61 +2989,6 @@ const CAPITULOS = [
                 " de la app: toc\u00E1 cada tarjeta para escuchar la nota mientras fij\u00E1s el color.)"),
             React.createElement(CapH3, null, "Un aviso sobre lo que este c\u00F3digo puede generar"),
             React.createElement(CapNota, null, "Una vez que la asociaci\u00F3n color-nota est\u00E1 bien afianzada, puede pasar algo que vale la pena anticipar: empezar a \"ver\" notas en colores que no tienen nada que ver con este sistema \u2014 una partitura sin colorear, un sem\u00E1foro, cualquier superficie con estos doce tonos. No es un efecto grave ni motivo de preocupaci\u00F3n, pero s\u00ED una fricci\u00F3n real que otros m\u00E9todos de asociaci\u00F3n fuerte tambi\u00E9n generan. Este libro no lo esconde: es el precio de automatizar bien una asociaci\u00F3n. Y como con cualquier escalera, el objetivo final es soltarla \u2014 llegar a un punto donde el color ya no hace falta, porque la nota se reconoce sola."))) },
-    { parte: "Parte I — Fundamentos", id: "cap1", titulo: "Cap. 1 — Introducción", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Pens\u00E1 en un cifrado de jazz cualquiera. Un La13."),
-            React.createElement(CapP, null, "Para leerlo, no alcanza con saber que es un acorde de La. Hay que reconstruir la escala de La, contar seis grados hacia arriba, recordar que la \"trecena\" es en realidad la sexta trasladada una octava, y llegar \u2014reci\u00E9n ah\u00ED\u2014 al Fa sostenido. Todo eso, en el tiempo que dura un comp\u00E1s, muchas veces varios acordes seguidos, en tiempo real, mientras segu\u00EDs tocando."),
-            React.createElement(CapP, null, "Ese c\u00E1lculo mental es exactamente el problema que este libro intenta resolver. No reemplazando la teor\u00EDa \u2014hace falta saber que el La13 lleva el Fa sostenido, eso no cambia\u2014, sino agreg\u00E1ndole una capa de reconocimiento instant\u00E1neo por encima del c\u00E1lculo: si cada una de las doce notas tiene un color fijo y propio, ver el Fa sostenido en una partitura, en un cifrado o en un diagrama de acorde deja de ser una operaci\u00F3n aritm\u00E9tica y pasa a ser una percepci\u00F3n directa. Un color no se calcula. Se reconoce."),
-            React.createElement(CapH3, null, "Para qu\u00E9 sirve esto, en la pr\u00E1ctica"),
-            React.createElement(CapP, null, "Antes de entrar en el sistema, conviene decir con toda claridad qu\u00E9 es este libro y qu\u00E9 no es. No es un tratado de teor\u00EDa del color con la m\u00FAsica como excusa, ni una manera nueva de aprender armon\u00EDa. Es un manual de estudio, pensado para alguien que va a pasar meses \u2014tal vez un a\u00F1o\u2014 practicando un instrumento, y que en ese tiempo se va a topar una y otra vez con cifrados y partituras que hay que leer m\u00E1s r\u00E1pido de lo que se los puede calcular. El color no cambia qu\u00E9 es un La13. Cambia cu\u00E1nto tarda el ojo en encontrarlo."),
-            React.createElement(CapP, null, "Con el tiempo \u2014y esto no hace falta forzarlo, aparece solo con la pr\u00E1ctica\u2014 el color tambi\u00E9n empieza a mostrar patrones: por qu\u00E9 ciertos acordes \"se sienten\" parecidos, por qu\u00E9 una progresi\u00F3n suena como suena. El cap\u00EDtulo 8 lleva esto un paso m\u00E1s all\u00E1 y muestra que cada tipo de acorde traza una figura geom\u00E9trica fija sobre la rueda de colores. Para algunos cerebros \u2014los que procesan mejor una forma espacial que una f\u00F3rmula\u2014 eso suma una capa m\u00E1s de reconocimiento. No es necesario para el uso b\u00E1sico del sistema, pero est\u00E1 ah\u00ED para quien lo aproveche."),
-            React.createElement(CapP, null, "Y hay una \u00FAltima capa, todav\u00EDa m\u00E1s opcional: el cap\u00EDtulo de piedras preciosas y energ\u00EDa (Parte IV) conecta este sistema con la litoterapia y la sanaci\u00F3n por sonido. Eso es tradici\u00F3n, no m\u00E9todo de estudio \u2014lo va a disfrutar quien ya tenga un inter\u00E9s personal en esos temas, desde la salud o la espiritualidad, y quien no, puede saltearlo sin perderse nada del sistema central."),
-            React.createElement(CapH3, null, "Qu\u00E9 vas a encontrar en este libro"),
-            React.createElement(CapP, null, "El coraz\u00F3n del libro es un mapeo completo y sistem\u00E1tico: las doce notas de la escala crom\u00E1tica, cada una con un color propio, consistente, y derivado por una l\u00F3gica expl\u00EDcita de mezcla \u2014no elegido al azar ni por est\u00E9tica. De ah\u00ED en m\u00E1s, el libro recorre c\u00F3mo ese sistema se comporta con acordes, tonalidades, el c\u00EDrculo de quintas, y termina en aplicaciones pr\u00E1cticas: lectura r\u00E1pida de partituras, reconocimiento de acordes, y s\u00ED \u2014 entender de un vistazo qu\u00E9 nota es la trecena de cualquier cifrado que tengas enfrente."),
-            React.createElement(CapP, null, "Los cinco primeros colores de ese mapeo \u2014los que sostienen la pentat\u00F3nica original\u2014 tienen adem\u00E1s una historia de origen, ligada al shakuhachi, la flauta de bamb\u00FA japonesa. Vale la pena decirlo desde ac\u00E1: esa historia es un adorno, no el argumento. Ayuda a memorizar los primeros cinco colores con una imagen en vez de una tabla, y tiene su propio encanto \u2014pero el sistema no depende de ella. Si ma\u00F1ana se olvida la leyenda, la rueda de colores y su l\u00F3gica de mezcla siguen intactas."),
-            React.createElement(CapH3, null, "A qui\u00E9n est\u00E1 dirigido"),
-            React.createElement(CapP, null, "A cualquiera que quiera leer m\u00FAsica m\u00E1s r\u00E1pido de lo que puede calcularla. No hace falta formaci\u00F3n previa en teor\u00EDa \u2014el libro construye los conceptos desde la base\u2014, pero va a resultar especialmente \u00FAtil para quien ya toca y se topa, una y otra vez, con el mismo problema del La13: saber la teor\u00EDa, y aun as\u00ED tardar un segundo de m\u00E1s en encontrar la nota."),
-            React.createElement(CapP, null, "El n\u00FAcleo te\u00F3rico-crom\u00E1tico del sistema es universal \u2014 vale para cualquier instrumento. Pero la aplicaci\u00F3n pr\u00E1ctica (c\u00F3mo se traduce un color en un movimiento de mano) s\u00ED depende del instrumento, as\u00ED que este libro desarrolla en profundidad el bandone\u00F3n y el piano \u2014 los dos instrumentos donde el autor puede dar ejemplos de primera mano \u2014 y deja abierta, como expansi\u00F3n futura, la traducci\u00F3n a otros instrumentos (guitarra, cuerdas, vientos)."))) },
-    { parte: "Parte I — Fundamentos", id: "cap2", titulo: "Cap. 2 — Música y color, en paralelo", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Antes de entrar en el sistema propiamente dicho, conviene alinear dos vocabularios: el de la m\u00FAsica y el del color. No porque sean el mismo lenguaje \u2014no lo son\u2014, sino porque este libro va a moverse todo el tiempo entre los dos, y ayuda tener claro qu\u00E9 concepto de un lado corresponde, aproximadamente, a qu\u00E9 concepto del otro."),
-            React.createElement("div", { className: "grid sm:grid-cols-2 gap-3 my-3" },
-                React.createElement(ConceptoPar, { a: "Semitono", b: "Matiz", descA: "El semitono es la unidad m\u00EDnima de la m\u00FAsica occidental temperada: la distancia m\u00E1s peque\u00F1a entre dos notas. El matiz (hue) es la unidad m\u00EDnima de identidad de un color. En este sistema, cada uno de los doce semitonos de la octava recibe un matiz propio y fijo." }),
-                React.createElement(ConceptoPar, { a: "Escala", b: "Gama", descA: "Una escala es un subconjunto ordenado de notas dentro de la octava. Una gama, en color, es un subconjunto de matices seleccionados de la rueda completa. La pentat\u00F3nica como los 'cinco colores ancla' es exactamente este paralelo." }),
-                React.createElement(ConceptoPar, { a: "Timbre", b: "Saturaci\u00F3n y valor", descA: "El timbre distingue un La tocado en viol\u00EDn de un La tocado en trompeta, aunque sea la misma nota. La saturaci\u00F3n y el valor cumplen un rol parecido en color. Este libro trabaja principalmente con matiz, pero saturaci\u00F3n y valor aparecen m\u00E1s adelante al hablar de acordes mayores y menores." }),
-                React.createElement(ConceptoPar, { a: "Octava", b: "Vuelta de la rueda", descA: "Despu\u00E9s de doce semitonos, la m\u00FAsica 'vuelve' a la misma nota, una octava m\u00E1s arriba. Despu\u00E9s de recorrer los doce matices de la rueda crom\u00E1tica, el color tambi\u00E9n completa una vuelta \u2014 la misma forma para los dos lenguajes." })),
-            React.createElement(CapP, null, "Con este vocabulario compartido, ya se puede avanzar al terreno donde otros lo intentaron antes."))) },
-    { parte: "Parte I — Fundamentos", id: "cap3", titulo: "Cap. 3 — Antecedentes históricos", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Cruzar sonido y color no es una idea nueva. Antes de este sistema, hubo al menos cuatro intentos serios \u2014y ninguno se puso de acuerdo con los dem\u00E1s\u2014, lo cual, parad\u00F3jicamente, es el mejor argumento a favor de construir un sistema propio y expl\u00EDcito en vez de buscar \"la\" respuesta correcta."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Isaac Newton (1704)."),
-                " En su tratado ",
-                React.createElement("i", null, "Opticks"),
-                ", Newton dividi\u00F3 el espectro de luz en siete colores \u2014ni seis ni ocho\u2014 porque buscaba una analog\u00EDa directa con las siete notas de la escala diat\u00F3nica. Empez\u00F3 su c\u00EDrculo en Re, en modo dorio, porque es la \u00FAnica escala de teclas blancas sim\u00E9trica. Fue el primer cruce \"cient\u00EDfico\" entre los dos mundos, aunque hoy se entiende como una analog\u00EDa forzada entre dos fen\u00F3menos f\u00EDsicos sin relaci\u00F3n real."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Alexander Scriabin (1910)."),
-                " El compositor ruso construy\u00F3, para su obra ",
-                React.createElement("i", null, "Prometeo: El poema del fuego"),
-                ", un sistema donde cada tonalidad ten\u00EDa un color asignado, pensado para proyectarse en un teclado de luces (el ",
-                React.createElement("i", null, "clavier \u00E0 lumi\u00E8res"),
-                ") durante la ejecuci\u00F3n. Orden\u00F3 las doce tonalidades seg\u00FAn el c\u00EDrculo de quintas y les asign\u00F3 colores siguiendo el orden del espectro visible \u2014lo cual quiere decir que, dibujado en c\u00EDrculo de quintas, su sistema es un arco\u00EDris perfecto, y dibujado en orden crom\u00E1tico, es un desorden completo. Es la elecci\u00F3n inversa a la de este libro, que privilegia el orden crom\u00E1tico por sobre el de quintas."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Nikolai Rimsky-Korsakov (siglo XIX)."),
-                " A diferencia de Newton y Scriabin, Rimsky-Korsakov no dise\u00F1\u00F3 un sistema: describ\u00EDa una sinestesia que dec\u00EDa percibir espont\u00E1neamente. Por eso sus colores no siguen ninguna l\u00F3gica geom\u00E9trica, y por eso choc\u00F3 p\u00FAblicamente con Scriabin \u2014para uno, Do mayor era blanco; para el otro, rojo\u2014. Ninguno de los dos estaba \"equivocado\": estaban describiendo experiencias distintas, no midiendo el mismo fen\u00F3meno."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Gong-Shang-Jue-Zhi-Yu (China, antig\u00FCedad)."),
-                " El precedente m\u00E1s antiguo y, para este libro, el m\u00E1s significativo: un sistema pentat\u00F3nico \u2014Gong, Shang, Jue, Zhi, Yu, equivalentes a Do-Re-Mi-Sol-La\u2014 vinculado desde hace milenios a los cinco elementos (Wu Xing) y sus colores tradicionales: tierra-amarillo, metal-blanco, madera-verde, fuego-rojo, agua-negro/azul. No coincide con los colores de este libro, pero es la prueba de que la idea central \u2014pentat\u00F3nica m\u00E1s color m\u00E1s naturaleza\u2014 tiene una tradici\u00F3n real y antigua, no inventada para la ocasi\u00F3n."),
-            React.createElement(CapImgPend, { texto: "comparativa de los cuatro sistemas hist\u00F3ricos (Newton, Scriabin, Rimsky-Korsakov, Gong-Shang-Jue-Zhi-Yu) uno al lado del otro." }),
-            React.createElement(CapP, null, "Ning\u00FAn sistema hist\u00F3rico coincide con otro. Eso no es una falla del proyecto: es la evidencia de que este cruce siempre fue, y siempre va a ser, una construcci\u00F3n simb\u00F3lica \u2014nunca un hecho descubierto. Este libro no pretende ser la excepci\u00F3n. Pretende, en cambio, ser el m\u00E1s expl\u00EDcito y mejor justificado de todos."))) },
-    { parte: "Parte I — Fundamentos", id: "cap4", titulo: "Cap. 4 — La historia del shakuhachi", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Antes de entrar en la historia, una aclaraci\u00F3n de peso: lo que sigue es el origen romanceado de los primeros cinco colores, no el argumento que sostiene el sistema. El argumento est\u00E1 en el cap\u00EDtulo 5, donde esos cinco colores se combinan por mezcla y generan matem\u00E1ticamente el resto de la rueda. Esta historia es, en cambio, la forma m\u00E1s simple de memorizar el punto de partida \u2014 una imagen en vez de una tabla \u2014 y funciona bien precisamente porque no pretende ser m\u00E1s que eso."),
-            React.createElement(CapP, null, "Antes de cualquier historia, hay una certeza que no necesita relato para sostenerse: en espa\u00F1ol, la nota Sol comparte nombre con el astro Sol \u2014 y el sol, a simple vista, es amarillo. No hace falta ninguna leyenda para afirmar que Sol es amarillo: es la correspondencia m\u00E1s firme de todo el sistema, la verdad de la que se parte, no una hip\u00F3tesis m\u00E1s entre varias. Todo lo dem\u00E1s se construye a partir de ah\u00ED, y vuelve ah\u00ED cada vez que hace falta un punto fijo."),
-            React.createElement(CapP, null, "Lo que sigue en este cap\u00EDtulo tiene un estatus distinto, y conviene decirlo con esa claridad: es una historia transmitida de viva voz, sin registro documentado, contada por un amigo \u2014luthier e int\u00E9rprete de shakuhachi, la flauta de bamb\u00FA japonesa, que construy\u00F3 instrumentos con ca\u00F1as tra\u00EDdas de Tailandia\u2014. No es el origen de todo el sistema. Es un relato rom\u00E1ntico, probablemente modificado con los a\u00F1os como toda historia oral, que se incluye ac\u00E1 no como fundamento sino como acompa\u00F1amiento \u2014 en gran parte porque tiene una coincidencia genuina que vale la pena se\u00F1alar: en la propia historia, cuando aparece la nota asociada a la vida, aparece tambi\u00E9n el rojo \u2014 la sangre, el coraz\u00F3n. Esa coincidencia no prueba nada, pero suma, y por eso tiene un lugar en el libro."),
-            React.createElement(CapImgPend, { texto: "ilustraci\u00F3n atmosf\u00E9rica de la leyenda (monta\u00F1a, sol, cielo, pasto, ganado a la distancia) \u2014 a generar en Midjourney." }),
-            React.createElement(CapP, null, "Con esa jerarqu\u00EDa clara \u2014Sol-amarillo como certeza, el resto como historia oral que acompa\u00F1a\u2014, as\u00ED es como se cuenta:"),
-            React.createElement(CapP, null, "Antes de que existiera una escala como tal, alguien mira hacia arriba y ve el sol \u2014claro, luminoso\u2014. De ah\u00ED nace la primera referencia: Sol es amarillo."),
-            React.createElement(CapP, null, "Despu\u00E9s el cielo: Do es azul. Despu\u00E9s lo que crece bajo los pies, el pasto de la monta\u00F1a: Re es verde. Despu\u00E9s la tierra y la piedra de la monta\u00F1a misma: Mi es marr\u00F3n. Y por \u00FAltimo, lejos, el color de la vida \u2014el ganado, la gente a la distancia\u2014: La es rojo."),
-            React.createElement(CapFig, { caption: "La pentat\u00F3nica original: Do, Re, Mi, Sol, La. Azul, verde, marr\u00F3n, amarillo, rojo." },
-                React.createElement(TiraCromatica, { highlight: ["C", "D", "E", "G", "A"] })),
-            React.createElement(CapP, null, "Con el tiempo, cuando la m\u00FAsica se volvi\u00F3 m\u00E1s compleja y se agregaron las notas \"de en medio\" \u2014Fa y Si\u2014, esas dos no heredaron un color de la leyenda. Y no hace falta que lo tengan: la pentat\u00F3nica es, en gran parte del mundo, la capa m\u00E1s antigua de la m\u00FAsica \u2014China, \u00C1frica, los Andes, la m\u00FAsica celta, el propio shakuhachi\u2014, y agregar notas despu\u00E9s es, hist\u00F3ricamente, lo normal. Fa y Si son esa segunda capa. El cap\u00EDtulo 5 muestra de d\u00F3nde sale, entonces, su color."))) },
     { parte: "Parte I — Fundamentos", id: "cap5", titulo: "Cap. 5 — De la pentatónica al cromatismo", body: (React.createElement(React.Fragment, null,
             React.createElement(CapP, null, "Los cinco colores de origen no se quedan aislados: se combinan entre s\u00ED, por mezcla directa, para generar los siete colores restantes y completar la rueda de doce."),
             React.createElement(CapP, null, "Do (azul) y Re (verde) se mezclan y dan Do sostenido, celeste \u2014 una mezcla v\u00E1lida en dos sentidos a la vez, porque el celeste, a diferencia del resto, es tambi\u00E9n un color espectral real: existe f\u00EDsicamente en la luz, entre el azul y el verde. Re (verde) y Mi (marr\u00F3n) dan Re sostenido, un oliva que resulta de la mezcla real entre ambos. Mi (marr\u00F3n) y Sol (amarillo) dan, en dos pasos, Fa y Fa sostenido \u2014un dorado que se aclara a medida que se acerca al amarillo\u2014. Sol (amarillo) y La (rojo) se mezclan y dan Sol sostenido, naranja. Y por \u00FAltimo, La (rojo) y Do (azul) se mezclan y dan Si, violeta \u2014que a su vez, mezclado otra vez con La, da Sib, rosa\u2014."),
@@ -3054,35 +2999,6 @@ const CAPITULOS = [
                 "Y ac\u00E1 aparece un cierre que no estaba planeado, pero que sostiene el argumento con una precisi\u00F3n que vale la pena se\u00F1alar: Fa y Si, las dos notas sin historia propia, est\u00E1n exactamente a distancia de tritono entre s\u00ED \u2014seis semitonos\u2014. El tritono es, en m\u00FAsica, el intervalo de mayor tensi\u00F3n e inestabilidad. Y en este sistema de color, es tambi\u00E9n el \u00FAnico intervalo cuya relaci\u00F3n crom\u00E1tica es un ",
                 React.createElement("b", null, "complementario exacto"),
                 " \u2014el par de colores de m\u00E1ximo contraste posible en toda la rueda\u2014. Las dos notas que llegaron despu\u00E9s, sin mito de origen, resultan ser las que generan, al mismo tiempo, la m\u00E1xima tensi\u00F3n arm\u00F3nica y el m\u00E1ximo contraste visual. No hizo falta forzarlo: es consecuencia directa de aplicar la misma l\u00F3gica hasta el final."))) },
-    { parte: "Parte I — Fundamentos", id: "cap5bis", titulo: "Cap. 5bis — Una variante real: el espectro continuo", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null,
-                "Todo lo construido hasta ac\u00E1 \u2014la leyenda del shakuhachi, la mezcla pentat\u00F3nica, el marr\u00F3n de Mi que en realidad es un naranja ensombrecido\u2014 pertenece a lo que este libro va a llamar, de ahora en m\u00E1s, la ",
-                React.createElement("b", null, "paleta de estudio"),
-                ". Es una paleta pensada para ense\u00F1ar: cada color tiene una historia, una raz\u00F3n, un porqu\u00E9 que se puede contar en una frase. Eso es, exactamente, lo que la vuelve memorable \u2014 y tambi\u00E9n lo que la vuelve, en un sentido estricto, artificial: nadie en la naturaleza mezcla marr\u00F3n con amarillo para producir un color intermedio, porque el marr\u00F3n no es un color de la luz."),
-            React.createElement(CapP, null, "Pero hay preguntas que la paleta de estudio no est\u00E1 pensada para responder bien. Si dos o tres notas se combinan en un acorde, \u00BFqu\u00E9 pasa si en vez de mezclar el marr\u00F3n de Mi lo que se mezcla es un matiz continuo, sin sombras narrativas de por medio? Para eso este libro construye una segunda paleta, con un criterio completamente distinto: no contar una historia, sino calcular con la mayor coherencia f\u00EDsica posible dentro del mismo sistema temperado de doce colores."),
-            React.createElement(CapP, null, "Esta segunda paleta \u2014la paleta real, o espectral\u2014 parte de los tres \u00FAnicos anclajes que este libro considera innegociables, porque no dependen de una leyenda sino de una coincidencia de idioma y de percepci\u00F3n directa: Do es azul (el cielo), Sol es amarillo (el sol, con el mismo nombre en espa\u00F1ol) y La es rojo. Entre esos tres puntos fijos, en vez de mezclar colores nota por nota como hizo el cap\u00EDtulo 5, la paleta real interpola un matiz continuo alrededor de toda la rueda, sin agregar ning\u00FAn color a mano. El resultado es una rueda que s\u00ED es, de punta a punta, un espectro real: no hay marr\u00F3n, no hay oliva, no hay beige \u2014 hay una progresi\u00F3n ininterrumpida de matiz, igual que un arco\u00EDris continuo doblado en c\u00EDrculo."),
-            React.createElement(CapP, null, "Esto tiene un costo, y conviene decirlo con la misma honestidad que sostuvo el cap\u00EDtulo anterior: al interpolar matem\u00E1ticamente, la paleta real pierde la justificaci\u00F3n individual de cada color. Mi ya no es \"la tierra de la monta\u00F1a\" \u2014 es, simplemente, el matiz que le toca por posici\u00F3n entre el verde de Re y el amarillo de Sol. Se gana continuidad f\u00EDsica; se pierde historia. Es la raz\u00F3n por la que este libro nunca usa la paleta real para ense\u00F1ar el sistema por primera vez."),
-            React.createElement("div", { className: "grid sm:grid-cols-2 gap-4 my-4" },
-                React.createElement(CapFig, { caption: "Paleta de estudio \u2014 narrativa" },
-                    React.createElement(RuedaCromatica, { size: 220 })),
-                React.createElement(CapFig, { caption: "Paleta real \u2014 calculada en vivo (interpolaci\u00F3n de matiz Do\u2192Sol\u2192La)" },
-                    React.createElement(RuedaCromatica, { size: 220, usePaletteReal: true }))),
-            React.createElement(CapNota, null, "Esta segunda rueda se calcula ac\u00E1 mismo, en la app, con el m\u00E9todo que describe el libro (interpolaci\u00F3n circular de matiz entre las tres anclas). No es una paleta fija ni \"oficial\" \u2014 es una demostraci\u00F3n en vivo del criterio del cap\u00EDtulo, para comparar contra la paleta de estudio."),
-            React.createElement(CapP, null, "Las dos paletas conviven a prop\u00F3sito, cada una con su funci\u00F3n: la de estudio para aprender y reconocer, la real para calcular mezclas de acordes con un criterio m\u00E1s f\u00EDsicamente coherente cuando se necesita esa precisi\u00F3n. Ninguna de las dos es \"la verdadera\". Las dos son honestas sobre lo que sacrifican, y esa honestidad \u2014no una f\u00F3rmula descubierta\u2014 es lo que sostiene todo el sistema."))) },
-    { parte: "Parte II — El sistema en profundidad", id: "cap6", titulo: "Cap. 6 — La correspondencia de la tercera", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Hay una pregunta que este sistema no pod\u00EDa dejar sin responder: \u00BFpor qu\u00E9 el marr\u00F3n \u2014justamente el color m\u00E1s \"irregular\" de toda la rueda\u2014 cae exactamente en Mi, la tercera de la t\u00F3nica?"),
-            React.createElement(CapP, null, "La respuesta no es solo narrativa. En armon\u00EDa, la tercera de un acorde es la nota que decide si ese acorde es mayor o menor. La fundamental y la quinta son estructurales, estables, casi neutras; la tercera es la que \"ti\u00F1e\" el car\u00E1cter emocional del acorde entero. Por eso, en la jerga de la armon\u00EDa, muchos m\u00FAsicos la llaman directamente \"la nota de color\" del acorde \u2014mucho antes de que existiera este libro."),
-            React.createElement(CapP, null, "El marr\u00F3n, en teor\u00EDa del color, cumple una funci\u00F3n estructuralmente id\u00E9ntica: no es un matiz propio, es una modificaci\u00F3n de valor y saturaci\u00F3n sobre otro color \u2014un naranja oscurecido\u2014. No aporta una identidad nueva: aporta una sombra sobre una identidad existente."),
-            React.createElement(CapP, null, "La nota cuya funci\u00F3n musical es matizar la armon\u00EDa es representada, con coherencia real y no solo po\u00E9tica, por la familia de color cuya funci\u00F3n \u00F3ptica es exactamente matizar en lugar de aportar un color propio. Es la misma l\u00F3gica que despu\u00E9s aparece, otra vez, en el mundo mineral: el mismo ion de cromo produce rojo en el rub\u00ED y verde en la esmeralda, dependiendo \u00FAnicamente de la estructura que lo aloja. La identidad no cambia. La expresi\u00F3n s\u00ED, seg\u00FAn el contexto. Ese principio \u2014contexto que define expresi\u00F3n sin alterar identidad\u2014 es, en el fondo, el que sostiene a todo el libro."),
-            React.createElement(CapH3, null, "La tercera como nota de color, en cualquier tonalidad"),
-            React.createElement(CapP, null, "Todo lo anterior se explic\u00F3 con Do como ejemplo, pero el principio es transportable a las doce tonalidades. Tomemos Sol sostenido, que en este sistema es naranja \u2014la mezcla entre Sol y La\u2014. Su quinta es siempre Re sostenido (oliva), sea la tonalidad mayor o menor: la quinta es estructural y no cambia el car\u00E1cter del acorde. Lo que s\u00ED cambia es la tercera: en Sol sostenido mayor, la tercera es Do (azul); en Sol sostenido menor, la tercera es Si (violeta). Dos colores completamente distintos matizando el mismo naranja de base, solo por el cambio de un semitono en la tercera \u2014 la manifestaci\u00F3n crom\u00E1tica exacta de lo que ese semitono hace arm\u00F3nicamente."),
-            React.createElement("div", { className: "grid grid-cols-2 gap-3 my-4" },
-                React.createElement(MixFigure, { titulo: "Sol# mayor (Sol#\u2013Do\u2013Re#)", notes: ["G#", "C", "D#"], nota: "Fundamental naranja + tercera mayor (Do, azul) + quinta oliva." }),
-                React.createElement(MixFigure, { titulo: "Sol# menor (Sol#\u2013Si\u2013Re#)", notes: ["G#", "B", "D#"], nota: "Misma fundamental y quinta \u2014 la tercera menor (Si, violeta) ti\u00F1e todo el acorde distinto." })),
-            React.createElement(CapP, null,
-                "Esto se repite, con sus propios valores, para cualquiera de las doce t\u00F3nicas \u2014 probalo en la pesta\u00F1a ",
-                React.createElement("b", null, "Acorde"),
-                " con cualquier acorde mayor y su relativo menor."))) },
     { parte: "Parte II — El sistema en profundidad", id: "cap7", titulo: "Cap. 7 — El doble temperamento", body: (React.createElement(React.Fragment, null,
             React.createElement(CapP, null, "Este es el cap\u00EDtulo bisagra: todo lo anterior construye hacia ac\u00E1, y todo lo que sigue lo aplica."),
             React.createElement(CapP, null, "La m\u00FAsica occidental temperada no usa las proporciones \"puras\" de la afinaci\u00F3n natural \u2014la serie arm\u00F3nica\u2014. Las ajusta, deliberadamente, para poder dividir la octava en doce semitonos exactamente iguales. Es una decisi\u00F3n pr\u00E1ctica, no un descubrimiento: se sacrifica la pureza ac\u00FAstica para ganar un sistema funcional y transportable a cualquier tonalidad."),
@@ -3104,98 +3020,20 @@ const CAPITULOS = [
             React.createElement(CapP, null, "Todo lo anterior son intentos de correspondencia f\u00EDsica que fallaron, y este libro los cuenta igual porque el fracaso ordenado es parte del argumento. Pero hay una sola nota, en todo el sistema, que s\u00ED tiene un anclaje f\u00EDsico real, verificable y ajeno a cualquier leyenda: el La. No por ninguna propiedad de su color \u2014la idea de que el rojo sea \"el primer color que percibe el ojo\" circula bastante, pero no resiste una revisi\u00F3n m\u00EDnima: seg\u00FAn qu\u00E9 estudio se consulte, el primer matiz en aparecer en el umbral de percepci\u00F3n es el amarillo, no el rojo, y no hay acuerdo real entre las fuentes."),
             React.createElement(CapP, null, "Lo que el La s\u00ED tiene, y que ninguna otra nota de la escala tiene, es un anclaje universalmente estandarizado: los 440 Hz del diapas\u00F3n, la referencia de afinaci\u00F3n de la m\u00FAsica occidental (norma ISO 16), el punto del que parte cualquier instrumento que se afina hoy. No es una leyenda ni una elecci\u00F3n est\u00E9tica \u2014 es, probablemente, el hecho m\u00E1s verificable de todo este libro."),
             React.createElement(CapP, null, "Y en este sistema, el La ya es rojo desde el cap\u00EDtulo 4 \u2014la vida, la sangre, a la distancia\u2014, sin que hiciera falta ajustar nada para lograrlo. Que la \u00FAnica nota con anclaje f\u00EDsico real termine siendo tambi\u00E9n el color de mayor intensidad simb\u00F3lica de la leyenda no es una prueba de nada, pero s\u00ED es una segunda capa de sentido que vale la pena se\u00F1alar."))) },
-    { parte: "Parte II — El sistema en profundidad", id: "cap8", titulo: "Cap. 8 — El círculo de quintas en color", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "El c\u00EDrculo de quintas \u2014la forma en que las tonalidades se organizan por su distancia arm\u00F3nica, no por su distancia crom\u00E1tica\u2014 revela algo que el c\u00EDrculo crom\u00E1tico simple no muestra."),
-            React.createElement(CapP, null, "Cada salto de una quinta equivale, en la rueda de doce colores de este sistema, a un giro constante de 210 grados. No es un n\u00FAmero cualquiera: coincide con relaciones que la teor\u00EDa del color ya nombra formalmente."),
-            React.createElement(CapP, null,
-                "El ",
-                React.createElement("b", null, "tritono"),
-                " \u2014seis semitonos, 180\u00B0\u2014 es un complementario exacto: el intervalo m\u00E1s disonante e inestable de la m\u00FAsica cae en el par de colores de m\u00E1ximo contraste posible. La ",
-                React.createElement("b", null, "quinta justa"),
-                " \u2014210\u00B0\u2014 es un split-complementario: consonancia m\u00E1xima despu\u00E9s de la octava, pero el color no llega al opuesto exacto, se queda a 30\u00B0 de distancia \u2014 contraste resuelto, no frontal. La ",
-                React.createElement("b", null, "tercera mayor"),
-                " \u2014120\u00B0\u2014 es el \u00E1ngulo cl\u00E1sico del esquema tr\u00EDadico en teor\u00EDa del color, el m\u00E1s vibrante y equilibrado que existe."),
-            React.createElement(CapP, null, "Dibujado como estrella de doce puntas \u2014la forma tradicional del c\u00EDrculo de quintas\u2014, cada conexi\u00F3n de este sistema resulta ser siempre split-complementaria: nunca un choque frontal, siempre una tensi\u00F3n resuelta. Y si se reordena la rueda completa seg\u00FAn el c\u00EDrculo de quintas en vez del orden crom\u00E1tico, los colores dejan de avanzar en degrad\u00E9 y saltan de forma irregular \u2014 la elecci\u00F3n exactamente inversa a la de Scriabin, que orden\u00F3 por quintas para lograr ah\u00ED su arco\u00EDris prolijo, sacrificando el orden crom\u00E1tico. Este sistema prioriza lo opuesto, a prop\u00F3sito."),
-            React.createElement(CapH3, null, "La geometr\u00EDa de los acordes"),
-            React.createElement(CapP, null, "Si el c\u00EDrculo de quintas ya mostraba que un intervalo fijo es siempre el mismo \u00E1ngulo, no importa desde qu\u00E9 nota se lo mida, el paso siguiente es natural: un acorde entero \u2014no ya un intervalo suelto, sino una combinaci\u00F3n de varias notas\u2014 tambi\u00E9n traza una figura fija sobre la rueda."),
-            React.createElement(CapP, null, "Una tr\u00EDada mayor cualquiera son tres puntos: la fundamental, la tercera mayor (4 semitonos) y la quinta justa (7 semitonos). Esos tres puntos, unidos, forman un tri\u00E1ngulo. Do mayor es Do-Mi-Sol: un tri\u00E1ngulo escaleno con v\u00E9rtices en esas tres posiciones. Sumarle la s\u00E9ptima mayor (Si, 11 semitonos) no cambia el tri\u00E1ngulo \u2014 lo extiende a un cuadril\u00E1tero, agregando un cuarto v\u00E9rtice. Y una tr\u00EDada menor, que solo difiere de la mayor en un semitono (la tercera baja de Mi a Mib), traza un tri\u00E1ngulo parecido pero no id\u00E9ntico: un v\u00E9rtice se corre, la figura entera se deforma un poco."),
-            React.createElement(CapP, null, "Y ah\u00ED aparece la utilidad m\u00E1s concreta de pensar los acordes como figuras: trasponer deja de ser recalcular notas una por una, y pasa a ser girar la misma figura sobre la rueda. Un Do mayor trasladado a Fa no es \"hay que pensar cu\u00E1l es la tercera de Fa\" \u2014 es tomar el mismo tri\u00E1ngulo y rotarlo hasta que la fundamental caiga en Fa. La forma no cambia nunca; lo \u00FAnico que cambia es la orientaci\u00F3n. Cada tipo de acorde \u2014mayor, menor, s\u00E9ptima mayor, s\u00E9ptima dominante, disminuido, aumentado\u2014 tiene su propia figura caracter\u00EDstica, fija, reconocible de un vistazo, sea cual sea la tonalidad."),
-            React.createElement(CapP, null,
-                "Para acordes de cuatro notas en adelante, la misma rueda admite una segunda lectura, m\u00E1s propia del vocabulario del jazz: en vez de una \u00FAnica figura cerrada, el acorde se puede descomponer en una ",
-                React.createElement("b", null, "base"),
-                " (fundamental, tercera, quinta y s\u00E9ptima) y sus ",
-                React.createElement("b", null, "tensiones"),
-                " (novena, oncena, trecena). Esta doble lectura es exactamente el concepto de poliacorde: pensar una estructura superior como dos acordes m\u00E1s simples sonando a la vez. (La pesta\u00F1a ",
-                React.createElement("b", null, "Quintas"),
-                " de esta app ya implementa el c\u00EDrculo interactivo de este cap\u00EDtulo.)"))) },
-    { parte: "Parte III — Aplicación", id: "cap9", titulo: "Cap. 9 — Lectura rápida de partituras por color", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapNota, null, "Cap\u00EDtulo en desarrollo \u2014 secci\u00F3n pr\u00E1ctica, pendiente de definir ejercicios concretos de lectura."),
-            React.createElement(CapP, null, "La idea central de este cap\u00EDtulo es simple de enunciar y requiere pr\u00E1ctica para volverse autom\u00E1tica: en vez de leer una nota, calcular su nombre, y reci\u00E9n ah\u00ED reconocer su funci\u00F3n arm\u00F3nica, el color permite saltar directo al \u00FAltimo paso. Un pasaje de partitura coloreado seg\u00FAn este sistema convierte la lectura en reconocimiento de patr\u00F3n visual \u2014qu\u00E9 colores se repiten, cu\u00E1les contrastan, d\u00F3nde aparece la tensi\u00F3n de un tritono\u2014 antes que en decodificaci\u00F3n nota por nota."),
-            React.createElement(CapP, null, "Falta desarrollar ac\u00E1: ejercicios progresivos de lectura, ejemplos de partituras reales coloreadas, y una gu\u00EDa de c\u00F3mo aplicar el sistema a instrumentos espec\u00EDficos (teclado, bandone\u00F3n, cuerdas, viento)."))) },
-    { parte: "Parte III — Aplicación", id: "cap10", titulo: "Cap. 10 — Acordes y tonalidades por mezcla", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Si cada nota tiene un color, un acorde \u2014varias notas simult\u00E1neas\u2014 puede pensarse como una mezcla de colores. Este sistema resuelve esa mezcla con tres decisiones independientes, no con una f\u00F3rmula \u00FAnica:"),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "Cu\u00E1nto pesa cada nota."),
-                " El modelo arm\u00F3nico usa la proporci\u00F3n real de la serie de arm\u00F3nicos naturales. El modelo narrativo le da m\u00E1s peso a la tercera, coherente con el cap\u00EDtulo 6. Pero ninguno de los dos resuelve un problema pr\u00E1ctico: si la s\u00E9ptima, la novena o la trecena pesan casi lo mismo que la fundamental, el color final puede terminar m\u00E1s cerca de esa tensi\u00F3n que de la ra\u00EDz \u2014 un Do13 con la trecena en La puede leerse casi rojo, y deja de comunicar que sigue siendo, ante todo, un acorde de Do."),
-            React.createElement(CapP, null,
-                "Por eso el modo por defecto de esta app es un tercer criterio: ",
-                React.createElement("b", null, "ra\u00EDz dominante"),
-                ". La fundamental se queda con un porcentaje fijo del peso total \u201480% por defecto\u2014 y todo lo dem\u00E1s se reparte en partes iguales el porcentaje restante. El resultado es un color que nunca se aleja demasiado de la ra\u00EDz, sin importar cu\u00E1ntas notas se agreguen encima."),
-            React.createElement(CapP, null,
-                React.createElement("b", { className: "text-gray-200" }, "C\u00F3mo se mezclan."),
-                " El modelo de ",
-                React.createElement("i", null, "luz"),
-                " mezcla por promedio aditivo de RGB \u2014como sumar haces de proyector\u2014. El modelo de ",
-                React.createElement("i", null, "pintura"),
-                " mezcla en espacio sustractivo \u2014como pigmento real: cuantos m\u00E1s colores se suman, m\u00E1s se oscurece. Esta app usa el modelo de luz."),
-            React.createElement(CapP, null, "El sistema no se detiene en la tr\u00EDada: se extiende a s\u00E9ptimas, novenas, acordes disminuidos, aumentados y suspendidos, cada uno con su propia combinaci\u00F3n de notas y, por lo tanto, su propio color resultante. Estos son los mismos ejemplos del libro, calculados en vivo con la paleta actual:"),
-            React.createElement("div", { className: "grid sm:grid-cols-3 gap-3 my-4" },
-                React.createElement(MixFigure, { titulo: "Re mayor (Re\u2013Fa#\u2013La)", notes: ["D", "F#", "A"] }),
-                React.createElement(MixFigure, { titulo: "Re menor (Re\u2013Fa\u2013La)", notes: ["D", "F", "A"] }),
-                React.createElement(MixFigure, { titulo: "Sol7 (Sol\u2013Si\u2013Re\u2013Fa)", notes: ["G", "B", "D", "F"] })),
-            React.createElement(CapP, null, "La tonalidad completa de una obra \u2014no solo un acorde aislado\u2014 se resuelve como el color de su acorde t\u00F3nica: Re mayor es la mezcla de Re-Fa\u266F-La; Re menor, la mezcla de Re-Fa-La. Es la soluci\u00F3n m\u00E1s econ\u00F3mica y la m\u00E1s coherente con todo lo dem\u00E1s: la identidad de una tonalidad es, en la pr\u00E1ctica musical, la calidad de su tr\u00EDada t\u00F3nica."),
-            React.createElement(CapP, null,
-                "La pesta\u00F1a ",
-                React.createElement("b", null, "Acorde"),
-                " de esta app implementa este cap\u00EDtulo en forma pr\u00E1ctica: analiz\u00E1 cualquier cifrado y vas a ver sus notas coloreadas con esta misma paleta."))) },
-    { parte: "Parte III — Aplicación", id: "cap11", titulo: "Cap. 11 — Reconocimiento de acordes", body: (React.createElement(CapNota, null, "Cap\u00EDtulo pendiente \u2014 de acuerdo a lo conversado, esta secci\u00F3n \"musical neta\" \u2014entrenar el reconocimiento auditivo y visual de acordes usando el sistema de color\u2014 queda para una etapa posterior del desarrollo del libro.")) },
-    { parte: "Parte III — Aplicación", id: "cap12", titulo: "Cap. 12 — Ejercicios progresivos", body: (React.createElement(CapNota, null, "Cap\u00EDtulo pendiente de dise\u00F1o. Estructura tentativa: ejercicios de reconocimiento de notas sueltas por color \u2192 intervalos \u2192 tr\u00EDadas \u2192 acordes extendidos \u2192 lectura de fragmentos breves \u2192 progresiones tonales completas. Falta definir la cantidad de niveles y si se acompa\u00F1an de partituras reales o de ejercicios propios.")) },
-    { parte: "Parte IV — Una puerta lateral", id: "piedras", titulo: "Piedras, energía y sonido", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Esta es la \u00FAnica puerta lateral del libro. Todo lo anterior \u2014Partes I, II y III\u2014 es el sistema propiamente dicho: justificado, temperado, y transportable a cualquier tonalidad. Lo que sigue ac\u00E1 es distinto en naturaleza, no solo en tono."),
-            React.createElement(CapP, null, "Este cap\u00EDtulo nace de una inquietud personal: las piedras preciosas tienen colores propios \u2014ya vimos, en el cap\u00EDtulo 6, que ese color tiene una causa at\u00F3mica real y verificable\u2014, pero en muchas tradiciones espirituales, adem\u00E1s, se les atribuyen propiedades energ\u00E9ticas. La pregunta que dio origen a este cap\u00EDtulo fue simple: si cada piedra de este sistema ya tiene asignada una nota musical propia, \u00BFpodr\u00EDa esa nota funcionar como una forma de \"sintonizar\" o reforzar simb\u00F3licamente la energ\u00EDa que la tradici\u00F3n le atribuye a esa piedra?"),
-            React.createElement(CapNota, null, "Lo que sigue es tradici\u00F3n espiritual, no evidencia cient\u00EDfica. La sanaci\u00F3n con cristales (litoterapia) y la sanaci\u00F3n con sonido son pr\u00E1cticas con siglos de historia \u2014documentadas ya en la Mesopotamia sumeria, hacia el 3000 a.C.\u2014 pero no cuentan con respaldo cient\u00EDfico validado. Se presentan ac\u00E1 como una capa de sentido para quien la busca, no como un hecho comprobado."),
-            React.createElement(CapH3, null, "Correspondencia entre piedra, energ\u00EDa tradicional y nota"),
-            React.createElement("div", { className: "overflow-x-auto rounded-xl border border-gray-800", style: { background: "#121212" } },
-                React.createElement("table", { className: "w-full text-xs", style: { minWidth: "520px" } },
-                    React.createElement("thead", null,
-                        React.createElement("tr", { style: { background: "#1a1a1a", borderBottom: "1px solid #333333" } }, ["Nota", "Piedra", "Energía tradicional", "Chakra"].map(h => (React.createElement("th", { key: h, className: "text-left px-3 py-2 text-gray-500 uppercase tracking-widest font-normal" }, h))))),
-                    React.createElement("tbody", null, PIEDRAS.map((p, i) => (React.createElement("tr", { key: p.n, style: { borderBottom: "1px solid #2a2a2a", background: i % 2 === 0 ? "transparent" : "#1a1a1a" } },
-                        React.createElement("td", { className: "px-3 py-2" },
-                            React.createElement("button", { onClick: () => playTone(p.n, 4, 0.6), className: "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full font-bold border-2", style: { backgroundColor: nc(p.n) + "18", borderColor: nc(p.n), color: nc(p.n) } }, CROM_DOBLE[p.n])),
-                        React.createElement("td", { className: "px-3 py-2 italic text-gray-300" }, p.piedra),
-                        React.createElement("td", { className: "px-3 py-2 text-gray-500" }, p.energia),
-                        React.createElement("td", { className: "px-3 py-2 text-gray-500 whitespace-nowrap" }, p.chakra))))))),
-            React.createElement(CapH3, null, "La nota como forma simb\u00F3lica de sinton\u00EDa"),
-            React.createElement(CapP, null, "La propuesta de este cap\u00EDtulo, dentro de ese marco de tradici\u00F3n y no de ciencia, es sencilla: ya que cada piedra tiene asignada una nota musical exacta dentro de este sistema, tocar esa nota espec\u00EDfica \u2014en un xil\u00F3fono, un cuenco tibetano afinado, una voz, cualquier instrumento\u2014 cerca de la piedra, o simplemente mientras se la sostiene, ofrece una forma de sinton\u00EDa simb\u00F3lica coherente con todo el resto del sistema: la misma nota que la representa en color es, ahora, tambi\u00E9n la que la representa en sonido. No se plantea como un mecanismo f\u00EDsico comprobado \u2014 se plantea como un gesto ritual con sentido interno, consistente de principio a fin con la l\u00F3gica de todo el libro."))) },
-    { parte: "Anexos", id: "anexo", titulo: "Anexo — Ficha de referencia rápida", body: (React.createElement(React.Fragment, null,
-            React.createElement(CapP, null, "Los doce colores oficiales del sistema, con su hex y su piedra correspondiente \u2014 la misma paleta que usa toda esta app."),
-            React.createElement("div", { className: "rounded-xl border border-gray-800 divide-y divide-gray-800 overflow-hidden", style: { background: "#121212" } }, PIEDRAS.map(p => (React.createElement("div", { key: p.n, className: "flex items-center gap-3 px-4 py-2.5" },
-                React.createElement("div", { className: "w-8 h-8 rounded-full border-2 flex-shrink-0", style: { background: nc(p.n), borderColor: nc(p.n) } }),
-                React.createElement("span", { className: "font-bold w-16", style: { color: nc(p.n), fontFamily: "'Libre Baskerville',serif" } }, CROM_DOBLE[p.n]),
-                React.createElement("span", { className: "font-mono text-xs text-gray-600 w-20" }, nc(p.n)),
-                React.createElement("span", { className: "italic text-gray-500 text-sm" }, p.piedra))))),
-            React.createElement(CapNota, null, "Pendiente de compilaci\u00F3n futura: gu\u00EDas de ejercitaci\u00F3n por instrumento (bandone\u00F3n, piano), y partituras reales coloreadas con el sistema \u2014 quedan para publicaciones independientes de este manual, una vez que el m\u00E9todo demuestre su naturalidad en el uso diario."))) },
 ];
+// Capítulos que ven los alumnos: cómo se llega a la distribución de los doce colores y el temperamento. El resto queda en el manual completo del Organizador.
+const CAP_PUBLICOS = ["cap0", "cap5", "cap7"];
 // ─── Componente de la pestaña "El Código" ────────────────────────────────────
-function ElCodigoTab({ irA } = {}) {
+function ElCodigoTab({ irA, completo = false } = {}) {
     const [vista, setVista] = useState("metodo"); // metodo | entrenar
     const [capIdx, setCapIdx] = useState(0);
-    const cap = CAPITULOS[capIdx];
-    const partes = [...new Set(CAPITULOS.map(c => c.parte))];
+    const CAPS = completo ? CAPITULOS : CAPITULOS.filter(c => CAP_PUBLICOS.includes(c.id));
+    const cap = CAPS[capIdx];
+    const partes = [...new Set(CAPS.map(c => c.parte))];
     return (React.createElement("div", { className: "stagger" },
         React.createElement("div", { className: "mb-4" },
-            React.createElement("h2", { className: "text-xl font-bold mb-1", style: { fontFamily: "'Libre Baskerville',serif" } }, "\uD83D\uDCD6 El C\u00F3digo \u2014 Manual de teor\u00EDa musical a trav\u00E9s del color"),
-            React.createElement("p", { className: "text-xs text-gray-500" }, "Temperamento crom\u00E1tico: un sistema de doce colores para leer m\u00FAsica m\u00E1s r\u00E1pido de lo que se la puede calcular.")),
+            React.createElement("h2", { className: "text-xl font-bold mb-1", style: { fontFamily: "'Libre Baskerville',serif" } }, completo ? "📖 Manual completo — El Código" : "📖 El Código"),
+            React.createElement("p", { className: "text-xs text-gray-500" }, completo ? "Versión completa del manual: solo la ves vos desde el Organizador." : "Cómo llegamos a la distribución de los doce colores y el temperamento cromático.")),
         React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-4", style: { background: "#101012", border: "1px solid #26262a", borderRadius: 12, padding: 4, width: "fit-content" } }, [["metodo", "📖 El método"], ["entrenar", "🎯 Entrenar los colores"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiPill(vista === v, { padding: "7px 16px" }), onClick: () => setVista(v) }, l)))),
         vista === "entrenar" && (React.createElement("div", null,
             React.createElement(EntrenaColores, null),
@@ -3205,14 +3043,14 @@ function ElCodigoTab({ irA } = {}) {
                     React.createElement(PaletaRueda, { compacta: true }))))),
         vista === "metodo" && React.createElement(React.Fragment, null,
             capIdx === 0 && React.createElement(PaletaRueda, null),
-            React.createElement("select", { value: capIdx, onChange: e => setCapIdx(parseInt(e.target.value)), className: "w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-200 mb-4", style: { fontFamily: "monospace" } }, partes.map(parte => (React.createElement("optgroup", { key: parte, label: parte }, CAPITULOS.map((c, i) => c.parte === parte && (React.createElement("option", { key: c.id, value: i }, c.titulo))))))),
+            React.createElement("select", { value: capIdx, onChange: e => setCapIdx(parseInt(e.target.value)), className: "w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-200 mb-4", style: { fontFamily: "monospace" } }, partes.map(parte => (React.createElement("optgroup", { key: parte, label: parte }, CAPS.map((c, i) => c.parte === parte && (React.createElement("option", { key: c.id, value: i }, c.titulo))))))),
             React.createElement("div", { className: "rounded-2xl p-5 border border-gray-700", style: { background: "#121212" } },
                 React.createElement("p", { className: "text-xs text-gray-500 uppercase tracking-widest mb-1" }, cap.parte),
                 React.createElement("h3", { className: "text-lg font-bold mb-4", style: { fontFamily: "'Libre Baskerville',serif", color: "#e6e6e6" } }, cap.titulo),
                 cap.body),
             React.createElement("div", { className: "flex justify-between mt-4" },
                 React.createElement("button", { disabled: capIdx === 0, onClick: () => setCapIdx(i => Math.max(0, i - 1)), className: "px-4 py-2 rounded-xl text-sm border disabled:opacity-30", style: { background: "#1a1a1a", borderColor: "#333333", color: "#e6e6e6" } }, "\u2190 Anterior"),
-                React.createElement("button", { disabled: capIdx === CAPITULOS.length - 1, onClick: () => setCapIdx(i => Math.min(CAPITULOS.length - 1, i + 1)), className: "px-4 py-2 rounded-xl text-sm border disabled:opacity-30", style: { background: "#1a1a1a", borderColor: "#333333", color: "#e6e6e6" } }, "Siguiente \u2192"))),
+                React.createElement("button", { disabled: capIdx === CAPS.length - 1, onClick: () => setCapIdx(i => Math.min(CAPS.length - 1, i + 1)), className: "px-4 py-2 rounded-xl text-sm border disabled:opacity-30", style: { background: "#1a1a1a", borderColor: "#333333", color: "#e6e6e6" } }, "Siguiente \u2192"))),
         irA && (React.createElement("div", { style: { marginTop: 22, background: "#121214", border: "1px solid #26262a", borderRadius: 14, padding: "16px 14px" } },
             React.createElement("p", { style: { ...uiLabel, marginBottom: 10 } }, "Siguiente paso \u00B7 a tocar"),
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10 } }, [["bandoneon", "♬", "Bandoneón", "El teclado coloreado, con su octava y tus acordes."], ["entrenador", "◎", "Entrenador", "Pintá teclas, armá acordes y practicá escalas."], [window.__ALUMNO ? "tareas" : "organizador", window.__ALUMNO ? "✎" : "▦", window.__ALUMNO ? "Mis tareas" : "Organizador", window.__ALUMNO ? "Los ejercicios que te dejó tu profesor." : "Armá clases y asignalas a tus alumnos."]].map(([id, ic, t, d]) => (React.createElement("button", { key: id, onClick: () => irA(id), style: { textAlign: "left", padding: "12px 14px", borderRadius: 12, cursor: "pointer", background: "rgba(255,255,255,.02)", border: "1px solid #2e2e32", color: "#ececec" } },
@@ -3454,23 +3292,50 @@ function PaintCanvas({ buttons, guesses, keyOf, checked, correctOf, onTapButton,
                         React.createElement("marker", { id: "camflecha", viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "3.6", markerHeight: "3.6", orient: "auto" },
                             React.createElement("path", { d: "M0,0 L10,5 L0,10 z", fill: "#fff", fillOpacity: ".8" }))),
                     flechas.map((f, i) => {
-                        const dx = f.b.x - f.a.x, dy = f.b.y - f.a.y, d = Math.hypot(dx, dy) || 1, r = BTN_SIZE / 2 + 2;
+                        const dx = f.b.x - f.a.x, dy = f.b.y - f.a.y, d = Math.hypot(dx, dy) || 1, r = BTN_SIZE / 2 + 2, rr = BTN_SIZE / 2;
                         if (d <= 2 * r + 6)
                             return null;
-                        const ia = G ? idxDe(f.a) : -1, ib = G ? idxDe(f.b) : -1, ruta = (G && ia >= 0 && ib >= 0) ? rutaCanal(G, ia, ib) : null;
-                        if (ruta && ruta.length) {
-                            const u = (p, q, k) => { const l = Math.hypot(q.x - p.x, q.y - p.y) || 1; return { x: p.x + (q.x - p.x) / l * k, y: p.y + (q.y - p.y) / l * k }; };
-                            const pts = [u(f.a, ruta[0], r), ...ruta, u(f.b, ruta[ruta.length - 1], r + 2)], mid = (p, q) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
-                            let dd = `M${pts[0].x},${pts[0].y}`;
-                            const m0 = mid(pts[0], pts[1]);
-                            dd += ` L${m0.x},${m0.y}`;
-                            for (let k = 1; k < pts.length - 1; k++) {
-                                const nx = k < pts.length - 2 ? mid(pts[k], pts[k + 1]) : pts[k + 1];
-                                dd += ` Q${pts[k].x},${pts[k].y} ${nx.x},${nx.y}`;
+                        const ia = idxDe(f.a), ib = idxDe(f.b);
+                        const libre = (p, q) => {
+                            const vx = q.x - p.x, vy = q.y - p.y, l2 = vx * vx + vy * vy || 1;
+                            for (let k = 0; k < buttons.length; k++) {
+                                if (k === ia || k === ib)
+                                    continue;
+                                const cx = buttons[k].x + rr, cy = buttons[k].y + rr;
+                                const t = Math.max(0, Math.min(1, ((cx - p.x) * vx + (cy - p.y) * vy) / l2)), ex = p.x + t * vx - cx, ey = p.y + t * vy - cy;
+                                if (ex * ex + ey * ey < (rr + 7) * (rr + 7))
+                                    return false;
                             }
-                            return React.createElement("path", { key: i, d: dd, fill: "none", stroke: "#fff", strokeOpacity: ".55", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", strokeDasharray: f.dash ? "6 5" : undefined, markerEnd: "url(#camflecha)" });
+                            return true;
+                        };
+                        const recta = () => (React.createElement("line", { key: i, x1: f.a.x + dx / d * r, y1: f.a.y + dy / d * r, x2: f.b.x - dx / d * (r + 1), y2: f.b.y - dy / d * (r + 1), stroke: "#fff", strokeOpacity: ".5", strokeWidth: "1.8", strokeLinecap: "round", strokeDasharray: f.dash ? "6 5" : undefined, markerEnd: "url(#camflecha)" }));
+                        if (rutaFlechas !== "canal" || !G || ia < 0 || ib < 0 || libre(f.a, f.b))
+                            return recta();
+                        const ruta = rutaCanal(G, ia, ib);
+                        if (!ruta || !ruta.length)
+                            return recta();
+                        // se quitan los giros que no hacen falta: queda el menor número de tramos rectos que esquivan los botones
+                        const wps = [f.a, ...ruta, f.b], pts = [wps[0]];
+                        let k0 = 0;
+                        while (k0 < wps.length - 1) {
+                            let j = wps.length - 1;
+                            while (j > k0 + 1 && !libre(wps[k0], wps[j]))
+                                j--;
+                            pts.push(wps[j]);
+                            k0 = j;
                         }
-                        return React.createElement("line", { key: i, x1: f.a.x + dx / d * r, y1: f.a.y + dy / d * r, x2: f.b.x - dx / d * (r + 1), y2: f.b.y - dy / d * (r + 1), stroke: "#fff", strokeOpacity: ".55", strokeWidth: "2", strokeLinecap: "round", strokeDasharray: f.dash ? "6 5" : undefined, markerEnd: "url(#camflecha)" });
+                        const u = (p, q, k) => { const l = Math.hypot(q.x - p.x, q.y - p.y) || 1; return { x: p.x + (q.x - p.x) / l * k, y: p.y + (q.y - p.y) / l * k }; };
+                        const P = [...pts];
+                        P[0] = u(pts[0], pts[1], r);
+                        P[P.length - 1] = u(pts[pts.length - 1], pts[pts.length - 2], r + 2);
+                        let dd = `M${P[0].x},${P[0].y}`;
+                        for (let k = 1; k < P.length - 1; k++) {
+                            const l1 = Math.hypot(P[k].x - P[k - 1].x, P[k].y - P[k - 1].y), l2 = Math.hypot(P[k + 1].x - P[k].x, P[k + 1].y - P[k].y), kk = Math.min(9, l1 / 2, l2 / 2);
+                            const A = u(P[k], P[k - 1], kk), B = u(P[k], P[k + 1], kk);
+                            dd += ` L${A.x},${A.y} Q${P[k].x},${P[k].y} ${B.x},${B.y}`;
+                        }
+                        dd += ` L${P[P.length - 1].x},${P[P.length - 1].y}`;
+                        return React.createElement("path", { key: i, d: dd, fill: "none", stroke: "#fff", strokeOpacity: ".5", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", strokeDasharray: f.dash ? "6 5" : undefined, markerEnd: "url(#camflecha)" });
                     }))),
                 rotulos && rotulos.map((t, i) => (React.createElement("div", { key: "r" + i, style: { position: "absolute", left: t.x, top: t.y, transform: "translate(-50%,-100%)", pointerEvents: "none", background: "#000d", border: "1px solid #ffffff66", color: "#fff",
                         fontSize: 9, fontWeight: 800, padding: "1px 6px", borderRadius: 8, whiteSpace: "nowrap", fontFamily: "monospace" } }, t.text)))))));
@@ -6248,7 +6113,12 @@ function HarmoniaApp() {
                             React.createElement("p", { className: "text-xs text-gray-500" }, "Toc\u00E1 los botones para escuchar. Con Marcar eleg\u00EDs notas sobre el teclado para armar un acorde y o\u00EDrlo completo.")),
                         React.createElement(BandoneonTab, null))),
                     tab === "entrenador" && React.createElement(EntrenadorTab, { preset: preset }),
-                    tab === "organizador" && !window.__ALUMNO && React.createElement(OrganizadorTab, { onProbar: practicar }),
+                    tab === "organizador" && !window.__ALUMNO && React.createElement(React.Fragment, null,
+                        React.createElement(OrganizadorTab, { onProbar: practicar }),
+                        React.createElement("details", { style: { marginTop: 22, background: "#101012", border: "1px solid #26262a", borderRadius: 12, padding: "10px 14px" } },
+                            React.createElement("summary", { style: { cursor: "pointer", fontFamily: UI_FONT, fontSize: 12, fontWeight: 600, color: "#cfcfd4" } }, "\uD83D\uDCDA Manual completo (solo para vos)"),
+                            React.createElement("div", { style: { marginTop: 14 } },
+                                React.createElement(ElCodigoTab, { completo: true })))),
                     tab === "tareas" && React.createElement(MisTareasTab, { onPracticar: practicar }),
                     tab === "circle" && React.createElement(CirculoQuintas, null),
                     tab === "modos" && React.createElement(ModosTab, null),
