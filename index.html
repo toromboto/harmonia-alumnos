@@ -2898,12 +2898,18 @@ function PaletaRueda({ compacta = false }) {
     const [escId, setEscId] = useState("crom");
     const [playing, setPlaying] = useState(null);
     const [sel, setSel] = useState(null);
+    const [juego, setJuego] = useState(null); // {modo:"nota"|"color", obj, ok, total, racha, res:{pc,bien}|null}
     const [romano] = useRomanos();
     const timers = useRef([]);
     useEffect(() => () => timers.current.forEach(clearTimeout), []);
     const esc = ESCALAS_HERO.find(e => e.id === escId);
     const escritas = buildScale(root, esc.ivs);
     const pcs = escritas.map(noteIdx);
+    const sorteo = (prev) => { let o = pcs[Math.random() * pcs.length | 0]; if (pcs.length > 1)
+        while (o === prev)
+            o = pcs[Math.random() * pcs.length | 0]; return o; };
+    useEffect(() => { if (juego && juego.obj === null)
+        setJuego(j => j ? { ...j, obj: sorteo(-1), res: null } : j); }, [juego]);
     const nombreDe = {};
     escritas.forEach(n => { nombreDe[noteIdx(n)] = nombreLat(n); });
     const gradoDe = {};
@@ -2912,6 +2918,17 @@ function PaletaRueda({ compacta = false }) {
     const fmtG = (g) => romano ? aRomano(g) : g;
     const stop = () => { timers.current.forEach(clearTimeout); timers.current = []; setPlaying(null); };
     const tocar = (pc) => { setSel(pc); playBand(CHROMATIC[pc], 4); };
+    const jugar = (modo) => { stop(); setSel(null); setJuego(j => ({ modo: modo || (j && j.modo) || "nota", obj: sorteo(-1), ok: j ? j.ok : 0, total: j ? j.total : 0, racha: j ? j.racha : 0, res: null })); };
+    const salirJuego = () => { stop(); setJuego(null); setSel(null); };
+    const reiniciaPregunta = () => { timers.current.forEach(clearTimeout); timers.current = []; setJuego(j => j ? { ...j, obj: null, res: null } : j); };
+    const responder = (pc) => {
+        if (!juego || juego.res || juego.obj === null || !pcs.includes(pc))
+            return;
+        const bien = pc === juego.obj;
+        playBand(CHROMATIC[juego.obj], 4);
+        setJuego({ ...juego, res: { pc, bien }, ok: juego.ok + (bien ? 1 : 0), total: juego.total + 1, racha: bien ? juego.racha + 1 : 0 });
+        timers.current.push(setTimeout(() => setJuego(j => j ? { ...j, obj: sorteo(j.obj), res: null } : j), bien ? 650 : 1400));
+    };
     const tocarEscala = () => {
         stop();
         const seq = [...esc.ivs, 12], r = noteIdx(root);
@@ -2920,34 +2937,50 @@ function PaletaRueda({ compacta = false }) {
     };
     const C = 220, R0 = 118, R1 = 204;
     const UI = { line: "#26262a", text: "#ececec", mute: "#8a8a90" };
-    const centroPc = sel !== null ? sel : noteIdx(root);
+    const jm = juego ? juego.modo : null, rev = juego && juego.res;
+    const centroPc = juego && juego.obj !== null ? juego.obj : sel !== null ? sel : noteIdx(root);
     const centroNombre = sel !== null ? (nombreDe[sel] || NOMBRES_PC[sel]) : nombreLat(root);
     const centroSub = sel !== null ? (pcs.includes(sel) ? `función ${fmtG(gradoDe[sel])}` : "fuera de la escala") : esc.nombre;
     return (React.createElement("div", { className: "rounded-2xl mb-5", style: { background: "radial-gradient(120% 90% at 50% 0%,#17171a 0%,#0e0e10 60%)", border: `1px solid ${UI.line}`, padding: compacta ? "14px 10px" : "20px 14px" } },
         React.createElement("div", { style: { textAlign: "center", marginBottom: 4 } },
-            React.createElement("p", { style: { fontFamily: "'Libre Baskerville',serif", fontSize: compacta ? 15 : 19, fontWeight: 700, letterSpacing: "0.04em", color: UI.text, margin: 0 } }, "La paleta de los doce colores"),
-            React.createElement("p", { style: { fontFamily: UI_FONT, fontSize: 11.5, color: UI.mute, margin: "4px 0 0" } }, "Cada nota tiene su color. Toc\u00E1 un color para escucharlo con timbre de fuelle.")),
+            React.createElement("p", { style: { fontFamily: "'Libre Baskerville',serif", fontSize: compacta ? 15 : 19, fontWeight: 700, letterSpacing: "0.04em", color: UI.text, margin: 0 } }, juego ? (jm === "nota" ? "Asigná el color a la nota" : "Asigná la nota al color") : "La paleta de los doce colores"),
+            juego ? (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", alignItems: "center", marginTop: 8 } },
+                React.createElement("div", { style: { display: "flex", background: "#0e0e10", border: "1px solid #2f2f35", borderRadius: 8, padding: 2, gap: 2 } }, [["nota", "Nota → color"], ["color", "Color → nota"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiVista(jm === v, { padding: "4px 10px" }), onClick: () => { timers.current.forEach(clearTimeout); timers.current = []; setJuego(j => ({ ...j, modo: v, obj: null, res: null })); } }, l)))),
+                React.createElement("span", { style: { fontFamily: "monospace", fontSize: 12, color: UI.text } },
+                    "\u2713 ",
+                    juego.ok,
+                    "/",
+                    juego.total,
+                    juego.racha > 1 ? ` · racha ${juego.racha}` : ""),
+                React.createElement("button", { style: uiGhost, onClick: salirJuego }, "\u2715 Salir"))) : (React.createElement("p", { style: { fontFamily: UI_FONT, fontSize: 11.5, color: UI.mute, margin: "4px 0 0" } }, "Cada nota tiene su color. Toc\u00E1 un color para escucharlo con timbre de fuelle."))),
         React.createElement("div", { style: { maxWidth: compacta ? 340 : 460, margin: "0 auto" } },
             React.createElement("svg", { viewBox: "0 0 440 440", width: "100%", style: { display: "block", overflow: "visible", userSelect: "none", WebkitUserSelect: "none" } },
                 React.createElement("circle", { cx: C, cy: C, r: R1 + 14, fill: "none", stroke: UI.line, strokeWidth: "1" }),
                 [...Array(12)].map((_, pc) => {
                     const a = pc * 30, on = pcs.includes(pc), col = nc(CHROMATIC[pc]), son = playing === pc, selx = sel === pc;
                     const [tx, ty] = cqPol(C, C, (R0 + R1) / 2 + 2, a), gx = tx, gy = ty + (compacta ? 13 : 15);
-                    return (React.createElement("g", { key: pc, onClick: () => tocar(pc), style: { cursor: "pointer", transformOrigin: `${C}px ${C}px`, transform: son ? "scale(1.07)" : on ? "scale(1.025)" : "scale(1)", transition: "transform .16s ease, opacity .25s ease", opacity: on ? 1 : 0.2, filter: son ? `drop-shadow(0 0 14px ${col})` : "none" } },
-                        React.createElement("path", { d: cqSector(C, C, R0, R1, a - 14.4, a + 14.4), fill: col, stroke: on ? "rgba(255,255,255,.55)" : "rgba(255,255,255,.12)", strokeWidth: selx ? 2.6 : 1.2 }),
-                        React.createElement("text", { x: tx, y: on ? ty - 7 : ty + 1, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: compacta ? 17 : 19, fill: txtSobre(col), pointerEvents: "none" } }, (nombreDe[pc] || CROM_SIMPLE[CHROMATIC[pc]]).split(" ")[0]),
-                        on && React.createElement("text", { x: gx, y: gy, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: UI_FONT, fontWeight: 800, fontSize: 11.5, fill: txtSobre(col), opacity: .85, pointerEvents: "none" } }, fmtG(gradoDe[pc]))));
+                    return (React.createElement("g", { key: pc, onClick: () => juego ? responder(pc) : tocar(pc), style: { cursor: "pointer", transformOrigin: `${C}px ${C}px`, transform: son ? "scale(1.07)" : on ? "scale(1.025)" : "scale(1)", transition: "transform .16s ease, opacity .25s ease", opacity: on ? 1 : 0.2, filter: son ? `drop-shadow(0 0 14px ${col})` : "none" } },
+                        React.createElement("path", { d: cqSector(C, C, R0, R1, a - 14.4, a + 14.4), fill: jm === "color" && !(rev && pc === juego.obj) ? "#26262b" : col, stroke: rev && pc === juego.obj ? "#ffffff" : rev && !rev.bien && pc === rev.pc ? "#e5645b" : on ? "rgba(255,255,255,.55)" : "rgba(255,255,255,.12)", strokeWidth: rev && (pc === juego.obj || pc === rev.pc) ? 4.5 : selx ? 2.6 : 1.2 }),
+                        jm !== "nota" && React.createElement("text", { x: tx, y: on && !jm ? ty - 7 : ty + 1, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: compacta ? 17 : 19, fill: jm === "color" && !(rev && pc === juego.obj) ? "#ececec" : txtSobre(col), pointerEvents: "none" } }, (nombreDe[pc] || CROM_SIMPLE[CHROMATIC[pc]]).split(" ")[0]),
+                        on && !jm && React.createElement("text", { x: gx, y: gy, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: UI_FONT, fontWeight: 800, fontSize: 11.5, fill: txtSobre(col), opacity: .85, pointerEvents: "none" } }, fmtG(gradoDe[pc]))));
                 }),
                 React.createElement("circle", { cx: C, cy: C, r: R0 - 8, fill: "#0b0b0c", stroke: UI.line, strokeWidth: "1.5" }),
-                React.createElement("circle", { cx: C, cy: C, r: R0 - 22, fill: "none", stroke: nc(CHROMATIC[centroPc]), strokeWidth: "3", style: { transition: "stroke .25s" } }),
-                React.createElement("text", { x: C, y: C - 12, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: centroNombre.length > 4 ? 32 : 42, fill: UI.text } }, centroNombre),
-                React.createElement("text", { x: C, y: C + 26, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: UI_FONT, fontWeight: 600, fontSize: 13, fill: "#b4b4ba" } }, centroSub),
-                React.createElement("text", { x: C, y: C + 48, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "monospace", fontSize: 11, letterSpacing: "0.14em", fill: "#6a6a70" } }, sel === null ? pasos.map(pasoLabel).join(" ") : ""))),
+                juego ? (jm === "nota" ? (React.createElement(React.Fragment, null,
+                    React.createElement("circle", { cx: C, cy: C, r: R0 - 22, fill: "none", stroke: rev ? (rev.bien ? "#6b9c7c" : "#c0615a") : "#3a3a3e", strokeWidth: "3", style: { transition: "stroke .2s" } }),
+                    React.createElement("text", { x: C, y: C + 2, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: juego.obj !== null && (nombreDe[juego.obj] || "").length > 4 ? 36 : 52, fill: UI.text } }, juego.obj !== null ? (nombreDe[juego.obj] || CROM_SIMPLE[CHROMATIC[juego.obj]]) : ""))) : (React.createElement(React.Fragment, null,
+                    React.createElement("circle", { cx: C, cy: C, r: R0 - 26, fill: juego.obj !== null ? nc(CHROMATIC[juego.obj]) : "#0b0b0c", stroke: rev ? (rev.bien ? "#6b9c7c" : "#c0615a") : "rgba(255,255,255,.35)", strokeWidth: "4", style: { transition: "stroke .2s" } })))) : sel === null ? (React.createElement("g", { onClick: () => jugar("nota"), style: { cursor: "pointer" } },
+                    React.createElement("circle", { cx: C, cy: C, r: R0 - 30, fill: "#2dd4bf", stroke: "#4fe0c4", strokeWidth: "3", style: { filter: "drop-shadow(0 0 14px rgba(45,212,191,.45))" } }),
+                    React.createElement("text", { x: C, y: C + 2, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: UI_FONT, fontWeight: 900, fontSize: 30, letterSpacing: "0.08em", fill: "#04211c", pointerEvents: "none" } }, "\u25B6 JUGAR"))) : null,
+                !juego && sel !== null && React.createElement("circle", { cx: C, cy: C, r: R0 - 22, fill: "none", stroke: nc(CHROMATIC[centroPc]), strokeWidth: "3", style: { transition: "stroke .25s" } }),
+                !juego && sel !== null && React.createElement("text", { x: C, y: C - 12, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: centroNombre.length > 4 ? 32 : 42, fill: UI.text } }, centroNombre),
+                !juego && sel !== null && React.createElement("text", { x: C, y: C + 26, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: UI_FONT, fontWeight: 600, fontSize: 13, fill: "#b4b4ba" } }, centroSub))),
         React.createElement("div", { style: { borderTop: `1px solid ${UI.line}`, paddingTop: 12, marginTop: 8 } },
             React.createElement("p", { style: { ...uiLabel, marginBottom: 8 } }, "Tonalidad"),
-            React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-3" }, RAICES_HERO.map(x => (React.createElement("button", { key: x, style: uiPill(x === root, { padding: "5px 11px" }), onClick: () => { stop(); setRoot(x); setSel(null); } }, nombreLat(x))))),
+            React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-3" }, RAICES_HERO.map(x => (React.createElement("button", { key: x, style: uiPill(x === root, { padding: "5px 11px" }), onClick: () => { stop(); setRoot(x); setSel(null); if (juego)
+                    reiniciaPregunta(); } }, nombreLat(x))))),
             React.createElement("p", { style: { ...uiLabel, marginBottom: 8 } }, "Escala"),
-            React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-3" }, ESCALAS_HERO.map(e => (React.createElement("button", { key: e.id, style: uiPill(e.id === escId, { padding: "5px 11px" }), onClick: () => { stop(); setEscId(e.id); setSel(null); } }, e.corto)))),
+            React.createElement("div", { className: "flex flex-wrap gap-1.5 mb-3" }, ESCALAS_HERO.map(e => (React.createElement("button", { key: e.id, style: uiPill(e.id === escId, { padding: "5px 11px" }), onClick: () => { stop(); setEscId(e.id); setSel(null); if (juego)
+                    reiniciaPregunta(); } }, e.corto)))),
             React.createElement("div", { className: "flex items-center justify-between flex-wrap gap-3" },
                 React.createElement("p", { style: { fontSize: 12, fontFamily: "monospace", color: UI.mute, margin: 0, flex: "1 1 220px" } },
                     React.createElement("b", { style: { color: UI.text, fontFamily: "'Libre Baskerville',serif", fontSize: 14 } },
@@ -2956,7 +2989,9 @@ function PaletaRueda({ compacta = false }) {
                         esc.nombre),
                     React.createElement("br", null),
                     escritas.map(nombreLat).join(" · ")),
-                React.createElement("button", { onClick: playing !== null ? stop : tocarEscala, style: uiPlay(false, { padding: "8px 16px" }) }, playing !== null ? "■ Parar" : "▶ Tocar escala")))));
+                React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } },
+                    !juego && sel !== null && React.createElement("button", { onClick: () => jugar("nota"), style: uiPlay(false, { padding: "8px 16px" }) }, "\u25B6 Jugar"),
+                    React.createElement("button", { onClick: playing !== null ? stop : tocarEscala, style: uiPlay(false, { padding: "8px 16px" }) }, playing !== null ? "■ Parar" : "▶ Tocar escala"))))));
 }
 // ─── ENTRENADOR DE COLORES (antes de llegar al bandoneón) ────────────────────
 function EntrenaColores() {
@@ -3985,7 +4020,7 @@ function EntrenadorTab({ preset } = {}) {
     catch (e) {
         setConMsg("No se pudo copiar.");
     } };
-    const [flechasModo, setFlechasModo] = useState("canal");
+    const [flechasModo, setFlechasModo] = useState("recta");
     // Armonizar una escala + Mis acordes (tarjetas guardadas en este dispositivo)
     const [armGrado, setArmGrado] = useState(0), [armCuat, setArmCuat] = useState(false), [conNota, setConNota] = useState("");
     const [misAcordes, setMisAcordes] = useState(() => { try {
@@ -4802,7 +4837,7 @@ function EntrenadorTab({ preset } = {}) {
             React.createElement("div", { style: { marginLeft: "auto", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
                 (esCam || modo === "lineas") && (React.createElement("div", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
                     React.createElement("span", { style: { ...uiLabel, fontSize: 8.5, color: "#6a6a72" } }, "Flechas"),
-                    React.createElement("div", { style: { display: "flex", background: "#121212", border: "1px solid #2f2f35", borderRadius: 8, padding: 2, gap: 2 } }, [["canal", "⤳ Canaletas"], ["recta", "╱ Rectas"], ["no", "✕ Sin"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiVista(flechasModo === v, { padding: "3px 8px", fontSize: 10.5 }), onClick: () => setFlechasModo(v) }, l)))))),
+                    React.createElement("div", { style: { display: "flex", background: "#121212", border: "1px solid #2f2f35", borderRadius: 8, padding: 2, gap: 2 } }, [["recta", "╱ Rectas"], ["canal", "⤳ Canaletas"], ["no", "✕ Sin"]].map(([v, l]) => (React.createElement("button", { key: v, style: uiVista(flechasModo === v, { padding: "3px 8px", fontSize: 10.5 }), onClick: () => setFlechasModo(v) }, l)))))),
                 (modo === "acordes" || modo === "forma" || modo === "notas") && (React.createElement("button", { onClick: () => setReveal(r => !r), style: { padding: "6px 12px", borderRadius: 9, border: "1px solid #e6e6e6", background: reveal ? "#e6e6e6" : "transparent", color: reveal ? "#0a0a0a" : "#e6e6e6", fontWeight: 700, fontSize: 10, cursor: "pointer" } },
                     "\uD83D\uDC41 ",
                     reveal ? "Ocultar respuesta" : "Ver respuesta")),
