@@ -3000,12 +3000,16 @@ function PaletaRueda({ compacta = false }) {
                     React.createElement("circle", { cx: C, cy: C, r: R0 - 22, fill: "none", stroke: rev ? (rev.bien ? "#6b9c7c" : "#c0615a") : "#3a3a3e", strokeWidth: "3", style: { transition: "stroke .2s" } }),
                     React.createElement("text", { x: C, y: C + 2, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: juego.obj !== null && nombreJ(juego.obj, juego.alt).length > 4 ? 36 : 52, fill: UI.text } }, juego.obj !== null ? nombreJ(juego.obj, juego.alt) : ""))) : (React.createElement(React.Fragment, null,
                     React.createElement("circle", { cx: C, cy: C, r: R0 - 26, fill: juego.obj !== null ? nc(CHROMATIC[juego.obj]) : "#0b0b0c", stroke: rev ? (rev.bien ? "#6b9c7c" : "#c0615a") : "rgba(255,255,255,.35)", strokeWidth: "4", style: { transition: "stroke .2s" } })))) : sel === null ? (React.createElement("g", { onClick: () => jugar("nota"), style: { cursor: "pointer" }, className: "jugar-btn" },
-                    React.createElement("style", null, `@keyframes jpulso{0%,100%{opacity:.4;transform:scale(1)}50%{opacity:1;transform:scale(1.55)}} .jugar-btn .jd{transform-box:fill-box;transform-origin:center} .jugar-btn:hover .jc{fill:#ffffff}`),
+                    React.createElement("style", null, `.jugar-btn .pr-disc{transition:fill .25s} .jugar-btn:hover .pr-disc{fill:#202026} .jugar-btn .pr-play,.jugar-btn .pr-txt{transition:fill .25s} .jugar-btn:hover .pr-play,.jugar-btn:hover .pr-txt{fill:#2dd4bf}`),
+                    React.createElement("defs", null,
+                        React.createElement("radialGradient", { id: "prG", cx: "50%", cy: "30%", r: "80%" },
+                            React.createElement("stop", { offset: "0%", stopColor: "#27272d" }),
+                            React.createElement("stop", { offset: "100%", stopColor: "#0d0d0f" }))),
                     React.createElement("circle", { cx: C, cy: C, r: R0 - 12, fill: "#0b0b0c", stroke: "#2a2a2e", strokeWidth: "1.5" }),
-                    [...Array(12)].map((_, i) => { const [dx, dy] = cqPol(C, C, 80, i * 30); return React.createElement("circle", { key: i, className: "jd", cx: dx, cy: dy, r: "6.5", fill: nc(CHROMATIC[i]), style: { animation: `jpulso 2.6s ease-in-out ${i * 0.2}s infinite` } }); }),
-                    React.createElement("circle", { className: "jc", cx: C, cy: C, r: "50", fill: "#ececec", style: { transition: "fill .2s" } }),
-                    React.createElement("path", { d: `M${C - 9},${C - 26} L${C + 17},${C - 9} L${C - 9},${C + 8} Z`, fill: "#0b0b0c", style: { pointerEvents: "none" } }),
-                    React.createElement("text", { x: C, y: C + 30, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: 14, letterSpacing: "0.24em", fill: "#0b0b0c", pointerEvents: "none" } }, "JUGAR"))) : null,
+                    [...Array(12)].map((_, i) => (React.createElement("path", { key: i, d: cqSector(C, C, 86, 95, i * 30 - 13, i * 30 + 13), fill: nc(CHROMATIC[i]) }))),
+                    React.createElement("circle", { className: "pr-disc", cx: C, cy: C, r: "77", fill: "url(#prG)", stroke: "#3b3b43", strokeWidth: "1.2" }),
+                    React.createElement("path", { className: "pr-play", d: `M${C - 10},${C - 36} L${C + 21},${C - 18} L${C - 10},${C + 0} Z`, fill: "#ececec", style: { pointerEvents: "none" } }),
+                    React.createElement("text", { className: "pr-txt", x: C, y: C + 33, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: 19, letterSpacing: "0.06em", fill: "#ececec", pointerEvents: "none" } }, "Practicar"))) : null,
                 !juego && sel !== null && React.createElement("circle", { cx: C, cy: C, r: R0 - 22, fill: "none", stroke: nc(CHROMATIC[centroPc]), strokeWidth: "3", style: { transition: "stroke .25s" } }),
                 !juego && sel !== null && React.createElement("text", { x: C, y: C - 12, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: centroNombre.length > 4 ? 32 : 42, fill: UI.text } }, centroNombre),
                 !juego && sel !== null && React.createElement("text", { x: C, y: C + 26, textAnchor: "middle", dominantBaseline: "middle", style: { fontFamily: UI_FONT, fontWeight: 600, fontSize: 13, fill: "#b4b4ba" } }, centroSub))),
@@ -3025,7 +3029,7 @@ function PaletaRueda({ compacta = false }) {
                     React.createElement("br", null),
                     escritas.map(nombreLat).join(" · ")),
                 React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } },
-                    !juego && sel !== null && React.createElement("button", { onClick: () => jugar("nota"), style: uiPlay(false, { padding: "8px 16px" }) }, "\u25B6 Jugar"),
+                    !juego && sel !== null && React.createElement("button", { onClick: () => jugar("nota"), style: uiPlay(false, { padding: "8px 16px" }) }, "\u25B6 Practicar"),
                     React.createElement("button", { onClick: playing !== null ? stop : tocarEscala, style: uiPlay(false, { padding: "8px 16px" }) }, playing !== null ? "■ Parar" : "▶ Tocar escala"))))));
 }
 // ─── ENTRENADOR DE COLORES (antes de llegar al bandoneón) ────────────────────
@@ -3121,28 +3125,35 @@ function EntrenaColores() {
                 ord.err === 1 ? "" : "es",
                 ". Repetilo hasta que salga sin errores.")))));
 }
-const PasoCard = ({ n, titulo, children }) => (React.createElement("div", { className: "flex gap-3 rounded-xl border p-3 my-2", style: { background: "#121212", borderColor: "#2a2a2a" } },
+const PasoCard = ({ n, titulo, children, fig }) => (React.createElement("div", { className: "flex gap-3 rounded-xl border p-3 my-2", style: { background: "#121212", borderColor: "#2a2a2a" } },
     React.createElement("div", { className: "flex-shrink-0 flex items-center justify-center rounded-full font-black", style: { width: 30, height: 30, background: "#e6e6e6", color: "#0a0a0a", fontFamily: "serif", fontSize: 15 } }, n),
-    React.createElement("div", { className: "min-w-0" },
+    React.createElement("div", { className: "min-w-0 flex-1" },
         React.createElement("p", { className: "text-sm font-bold mb-1", style: { color: "#d4d4d4" } }, titulo),
-        React.createElement("p", { className: "text-xs text-gray-400 leading-relaxed" }, children))));
+        React.createElement("p", { className: "text-xs text-gray-400 leading-relaxed" }, children),
+        fig ? React.createElement("div", { style: { marginTop: 10 } }, fig) : null)));
+const TiraColores = () => (React.createElement("div", { style: { display: "flex", gap: 3, width: "100%" } }, CHROMATIC.map(n => (React.createElement("div", { key: n, onClick: () => playTone(n, 4, 0.6), style: { flex: 1, minWidth: 0, cursor: "pointer", textAlign: "center" } },
+    React.createElement("div", { style: { height: 34, borderRadius: 7, background: nc(n), border: "1px solid rgba(255,255,255,.2)" } }),
+    React.createElement("div", { style: { fontSize: 9, color: "#aaa", fontFamily: "serif", marginTop: 3, whiteSpace: "nowrap" } }, CROM_SIMPLE[n]))))));
+const TarjetasMuestra = () => (React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [["C", "Do"], ["C#", "Do♯ / Re♭"], ["D", "Re"]].map(([n, t]) => (React.createElement("div", { key: n, onClick: () => playTone(n, 4, 0.6), style: { width: 92, borderRadius: 10, overflow: "hidden", border: "1px solid #2f2f35", background: "#0e0e10", cursor: "pointer" } },
+    React.createElement("div", { style: { height: 46, background: nc(n) } }),
+    React.createElement("div", { style: { padding: "5px 6px", textAlign: "center", fontFamily: "'Libre Baskerville',serif", fontSize: 12, fontWeight: 700, color: "#ececec" } }, t))))));
 // ─── Estructura del libro: partes y capítulos ────────────────────────────────
 const CAPITULOS = [];
 // Capítulos que ven los alumnos: solo lo técnico del temperamento cromático. El manual completo (CAPITULOS) queda en el Organizador.
 const CAPITULOS_TEC = [
     { parte: "El método", id: "cap0", titulo: "El código de color", body: (React.createElement(React.Fragment, null,
-            React.createElement("div", { className: "rounded-xl p-4 mb-4 border", style: { background: "#0a0a0a", borderColor: "#333333" } },
-                React.createElement("p", { className: "text-[10px] uppercase tracking-widest mb-2", style: { color: "#8a8a8a" } }, "Antes de empezar"),
-                React.createElement("p", { className: "text-sm text-gray-300 leading-relaxed" }, "Antes de que este sistema te ahorre un solo segundo de c\u00E1lculo, te va a pedir algo: que te aprendas doce colores de memoria, con la misma seriedad con la que en alg\u00FAn momento te aprendiste el nombre de las doce notas. Esto no es gratis, y vale la pena decirlo as\u00ED, sin vueltas, en la primera p\u00E1gina: hay una inversi\u00F3n inicial antes de que aparezca la ganancia. Cualquier m\u00E9todo serio la tiene \u2014el solfeo, la digitaci\u00F3n, las escalas\u2014 y este no es la excepci\u00F3n.")),
-            React.createElement(CapP, null, "Lo que s\u00ED cambia es qu\u00E9 est\u00E1s memorizando. No est\u00E1s memorizando teor\u00EDa todav\u00EDa. Est\u00E1s memorizando una paleta: doce parches de color, cada uno con un nombre de nota al lado. Nada m\u00E1s. La teor\u00EDa llega despu\u00E9s, paso a paso, apoyada en esa memorizaci\u00F3n \u2014 pero si lleg\u00E1s a los acordes sin tener el color automatizado, vas a estar leyendo colores en vez de reconoci\u00E9ndolos, y ah\u00ED el sistema entero pierde su funci\u00F3n."),
-            React.createElement(CapH3, null, "El orden en que conviene aprenderlo"),
-            React.createElement(CapP, null, "Se presenta la paleta en tres pasos, cada uno con un prop\u00F3sito distinto."),
-            React.createElement(PasoCard, { n: "1", titulo: "Primero, una tira" }, "Las doce notas en fila, igual que las teclas de un piano o de un bandone\u00F3n desplegadas en l\u00EDnea recta. Es la forma m\u00E1s directa de un primer contacto \u2014 no hay \u00E1ngulos que leer, no hay geometr\u00EDa que entender todav\u00EDa. Solo doce colores, uno al lado del otro, cada uno con su nombre."),
-            React.createElement(PasoCard, { n: "2", titulo: "Despu\u00E9s, la rueda" }, "Las mismas doce notas, ahora en c\u00EDrculo. Ac\u00E1 aparece algo que la tira no pod\u00EDa mostrar: que las notas no son una lista que termina, sino un ciclo que vuelve sobre s\u00ED mismo \u2014 la relaci\u00F3n circular entre semitonos que vas a necesitar m\u00E1s adelante para entender intervalos, el c\u00EDrculo de quintas, y la geometr\u00EDa de los acordes."),
-            React.createElement(PasoCard, { n: "3", titulo: "Por \u00FAltimo, tarjetas de estudio" },
-                "Una nota por vez, con su color y su enarm\u00F3nico (por ejemplo, Do sostenido y Re bemol comparten color). Este es el paso de memorizaci\u00F3n activa propiamente dicho: repetici\u00F3n, no explicaci\u00F3n. Es donde el c\u00F3digo deja de ser informaci\u00F3n y empieza a ser reflejo. (Pod\u00E9s practicar esto en la pesta\u00F1a ",
+            React.createElement(CapP, null,
+                "Antes de que el sistema te ahorre c\u00E1lculo hay una inversi\u00F3n inicial: aprender ",
+                React.createElement("b", { className: "text-gray-200" }, "doce colores de memoria"),
+                ", con la misma seriedad con que aprendiste el nombre de las doce notas."),
+            React.createElement(CapP, null, "Lo que memoriz\u00E1s es una paleta \u2014doce colores, cada uno con su nombre de nota\u2014, no teor\u00EDa. La teor\u00EDa llega despu\u00E9s, apoyada en esa memoria."),
+            React.createElement(CapH3, null, "El orden para aprenderla"),
+            React.createElement(PasoCard, { n: "1", titulo: "Primero, una tira", fig: React.createElement(TiraColores, null) }, "Las doce notas en fila, cada una con su color y su nombre."),
+            React.createElement(PasoCard, { n: "2", titulo: "Despu\u00E9s, la rueda", fig: React.createElement(RuedaCromatica, { size: 210 }) }, "Las mismas doce en c\u00EDrculo: no son una lista que termina, sino un ciclo que vuelve a empezar."),
+            React.createElement(PasoCard, { n: "3", titulo: "Por \u00FAltimo, tarjetas", fig: React.createElement(TarjetasMuestra, null) },
+                "Una nota por vez, con su color y su enarm\u00F3nico (Do\u266F y Re\u266D comparten color). Repetici\u00F3n hasta que sea reflejo; se practica en la pesta\u00F1a ",
                 React.createElement("b", null, "Colores"),
-                " de la app: toc\u00E1 cada tarjeta para escuchar la nota mientras fij\u00E1s el color.)"))) },
+                "."))) },
     { parte: "El método", id: "tec5", titulo: "De la pentatónica al cromatismo", body: (React.createElement(React.Fragment, null,
             React.createElement(CapP, null, "Los cinco colores de origen no se quedan aislados: se combinan entre s\u00ED, por mezcla directa, para generar los siete colores restantes y completar la rueda de doce."),
             React.createElement(CapP, null, "Do (azul) y Re (verde) se mezclan y dan Do sostenido, celeste \u2014un color espectral real, entre el azul y el verde\u2014. Re (verde) y Mi (marr\u00F3n) dan Re sostenido, un oliva. Mi (marr\u00F3n) y Sol (amarillo) dan, en dos pasos, Fa y Fa sostenido, un dorado que se aclara a medida que se acerca al amarillo. Sol (amarillo) y La (rojo) dan Sol sostenido, naranja. La (rojo) y Do (azul) dan Si, violeta, que mezclado otra vez con La da Si bemol, rosa."),
@@ -3849,7 +3860,7 @@ function EntrenadorTab({ preset } = {}) {
     const [checked, setChecked] = useState(false);
     const [picker, setPicker] = useState(null); // botón abierto en la hoja de color
     const [copied, setCopied] = useState(false);
-    const [modo, setModo] = useState("colores"); // "colores" | "acordes" | "escalas" | "forma" | "notas" | "camino"
+    const [modo, setModo] = useState("forma"); // "colores" | "acordes" | "escalas" | "forma" | "notas" | "camino"
     const [chordSel, setChordSel] = useState({}); // `${id}|${bellows}` -> true
     const [reveal, setReveal] = useState(false);
     const [formaPts, setFormaPts] = useState({ L: [], R: [] }); // círculos puestos de memoria (ejercicio "Armar el teclado")
@@ -4588,7 +4599,13 @@ function EntrenadorTab({ preset } = {}) {
                                             : modo === "forma" ? "Reconstruí de memoria la forma de cada teclado, con círculos vacíos. Después tocá \"Corregir\"."
                                                 : modo === "notas" ? "Sobre el teclado con los círculos vacíos, decí qué nota corresponde a cada botón, abriendo o cerrando. Después tocá \"Corregir\"."
                                                     : "Tocá cada botón y elegí, de memoria, el color que le corresponde. Después tocá \"Corregir\" para ver qué acertaste.")),
-        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", background: "#121212", border: "1.5px solid #2a2a2a", borderRadius: 10, padding: 3, gap: 2, marginBottom: 10, width: "fit-content", maxWidth: "100%" } }, [["lineas", "📐 Ubicar líneas"], ["colores", "🎨 Pintar colores"], ["acordes", "🎼 Acordes"], ["escalas", "🎶 Escalas"], ["forma", "◯ Armar el teclado"], ["notas", "♪ Poner las notas"]].map(([m, l]) => (React.createElement("button", { key: m, style: { ...pill(modo === m || (m === "escalas" && modo === "camino") || (m === "acordes" && (modo === "arpegio" || modo === "voz" || modo === "construir" || modo === "armonizar"))), padding: "6px 14px", fontSize: 11 }, onClick: () => setModo(m === "escalas" ? escUltimo : m === "acordes" ? acoUltimo : m) }, l)))),
+        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", background: "#121212", border: "1.5px solid #2a2a2a", borderRadius: 10, padding: 3, gap: 2, marginBottom: 10, width: "fit-content", maxWidth: "100%" } }, [["forma", "◯ Armar el teclado"], ["lineas", "📐 Ubicar líneas"], ["notas", "♪ Poner las notas"], ["colores", "🎨 Pintar colores"], ["escalas", "🎶 Escalas"], ["acordes", "🎼 Acordes"]].map(([m, l]) => {
+            const act = modo === m || (m === "escalas" && modo === "camino") || (m === "acordes" && (modo === "arpegio" || modo === "voz" || modo === "construir" || modo === "armonizar"));
+            const musical = m === "escalas" || m === "acordes"; // herramientas con finalidad musical: un tono distinto
+            return (React.createElement("span", { key: m, style: { display: "contents" } },
+                m === "escalas" && React.createElement("span", { style: { width: 1, alignSelf: "stretch", background: "#34343a", margin: "4px 5px" } }),
+                React.createElement("button", { style: { ...pill(act), padding: "6px 14px", fontSize: 11, ...(musical && !act ? { background: "#1f1f25", border: "1px solid #3a3a43", color: "#d6d6dc" } : {}) }, onClick: () => setModo(m === "escalas" ? escUltimo : m === "acordes" ? acoUltimo : m) }, l)));
+        })),
         modo === "escalas" && (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
             React.createElement("p", { className: "text-xs text-gray-500 mb-3" }, "Con la gu\u00EDa, el teclado te muestra la escala nota por nota, con su octava real y su color. De memoria, la toc\u00E1s vos y el color aparece cuando acert\u00E1s. Us\u00E1 el bot\u00F3n Abre / Cierra de arriba para cambiar el sentido del fuelle."),
             escCab,
