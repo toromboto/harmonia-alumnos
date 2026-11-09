@@ -4237,6 +4237,18 @@ function EntrenadorTab({ preset } = {}) {
     const conAn = useMemo(() => { if (conItems.length < 2)
         return null; const bajo = [...conItems].sort((a, b) => a.midi - b.midi)[0].pc; return analizarAcorde(conItems.map(i => i.pc), bajo, { raiz: conRaizUso }); }, [conItems, conRaizUso, conVer]);
     useEffect(() => { setConTxt(conAn && !conAn.intervalo ? conAn.suf : ""); setConMsg(""); }, [conAn && conAn.key, conAn && conAn.suf]);
+    // raíz, 3ª, 5ª y 7ª del acorde que se está armando (si las tiene) para sugerir formas
+    const conRoles = useMemo(() => {
+        if (!conAn || conAn.intervalo)
+            return null;
+        const r = conAn.rootPc, set = [...new Set(conItems.map(i => i.pc))], iv = p => (p - r + 12) % 12, de = (ivs) => { const h = set.find(p => ivs.includes(iv(p))); return h === undefined ? null : h; };
+        const t = de([3, 4]), q = de([7, 6, 8]), sp = de([10, 11, 9]);
+        if (t === null || q === null)
+            return null;
+        const pcs = [r, t, q, ...(sp !== null ? [sp] : [])];
+        return { pcs, nombres: pcs.map(p => (conAn.nombres && conAn.nombres[p]) || CROM_SIMPLE[CHROMATIC[p]]) };
+    }, [conAn, conItems]);
+    const conVoicings = useMemo(() => conRoles ? voicingsDe(conRoles.pcs, conRoles.nombres, leftBtns, rightBtns, bellows) : null, [conRoles, leftBtns, rightBtns, bellows]);
     const conStateOf = (btn) => {
         const it = itemDe(btn), nt = CHROMATIC[it.pc], col = nc(nt), k = conIds.indexOf(btn.id);
         if (k < 0)
@@ -4301,21 +4313,40 @@ function EntrenadorTab({ preset } = {}) {
             return { pc, nombre: nombreAcordeEs(rootEng, armSel.q), nombres, pcs, v: voicingsDe(pcs, nombres, leftBtns, rightBtns, bellows)[pi] };
         });
     }, [armMatriz, armSel.q, armPatron, leftBtns, rightBtns, bellows]);
+    const formasUI = (lista, { onVer, activoIds, btnVer, guardar }) => (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8 } }, lista.map(v => {
+        const on = activoIds && v.ids && activoIds.join() === v.ids.join();
+        return (React.createElement("div", { key: v.id, style: { flex: "1 1 220px", maxWidth: 340, padding: "9px 11px", borderRadius: 12, background: on ? "#1b1b20" : "#0e0e10", border: `1px solid ${on ? "#cfcfd4" : "#2c2c30"}` } },
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 6, alignItems: "baseline" } },
+                React.createElement("b", { style: { fontFamily: "'Libre Baskerville',serif", fontSize: 14, color: "#ececec" } }, v.nombre),
+                v.fuelle && React.createElement("span", { style: { fontSize: 10, color: "#7c7c82" } },
+                    v.fuelle === "abre" ? "abriendo" : "cerrando",
+                    v.fuelle !== bellows ? " (cambia el fuelle)" : "")),
+            React.createElement("div", { style: { fontSize: 10.5, color: "#8a8a90", margin: "2px 0 6px" } }, v.uso),
+            v.vacio ? React.createElement("div", { style: { fontSize: 11.5, color: "#c9a25a" } }, "No hay botones para armarlo as\u00ED en este teclado.") : (React.createElement(React.Fragment, null,
+                React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 } }, v.notas.map(n => {
+                    const col = nc(CHROMATIC[n.pc]);
+                    return (React.createElement("span", { key: n.id, style: { display: "inline-flex", alignItems: "center", gap: 4, padding: "1px 7px 1px 3px", borderRadius: 999, background: "#16161a", border: "1px solid #2c2c30", fontSize: 11.5, color: "#ececec" } },
+                        React.createElement("span", { style: { width: 16, height: 16, borderRadius: "50%", background: col, color: txtSobre(col), fontSize: 8.5, fontWeight: 800, fontFamily: "monospace", display: "inline-flex", alignItems: "center", justifyContent: "center" } }, ROL_TXT[n.rol]),
+                        React.createElement("span", { style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700 } },
+                            n.nombre,
+                            n.oct),
+                        React.createElement("span", { style: { fontSize: 9, color: "#6a6a70" } }, n.hand === "L" ? "izq" : "der")));
+                })),
+                React.createElement("div", { style: { fontSize: 10, color: "#6a6a70", marginBottom: 6 } },
+                    v.manos.L ? `${v.manos.L} en la izquierda` : "",
+                    v.manos.L && v.manos.R ? " · " : "",
+                    v.manos.R ? `${v.manos.R} en la derecha` : ""),
+                React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } },
+                    React.createElement("button", { style: uiPlay(false, { padding: "3px 11px", fontSize: 11.5 }), onClick: () => tocarVoicing(v, false) }, "\u25B6"),
+                    React.createElement("button", { style: uiTool(on), onClick: () => onVer(v) }, btnVer),
+                    React.createElement("button", { style: uiTool(false), onClick: () => guardar(v) }, "\u2605"))))));
+    })));
     const verVoicing = (v, titulo, nombres) => { if (!v || v.vacio)
         return; setBellows(v.fuelle); setVozSel({ ids: v.ids, fuelle: v.fuelle, titulo, nom: Object.fromEntries(v.notas.map(n => [n.id, n.nombre])), rol: Object.fromEntries(v.notas.map(n => [n.id, n.rol])) }); };
     const vozItems = (v) => v.notas.map(n => conBy[n.id]).filter(Boolean).map(b => itemsMano([b], v.fuelle)[0]);
     const tocarVoicing = (v, arp) => { const o = vozItems(v).sort((a, b) => a.midi - b.midi); o.forEach((it, i) => playBandDur(CHROMATIC[it.pc], it.oct, arp ? 0.38 : 1.8, arp ? i * 0.32 : i * 0.012)); };
     const guardarVoicing = (v, titulo) => cardGuardar(titulo, "", v.ids, v.fuelle, Object.fromEntries(v.notas.map(n => [n.pc, n.nombre])));
-    const armVoz = (pcs) => {
-        const L = itemsMano(leftBtns, bellows), R = itemsMano(rightBtns, bellows), all = [...L, ...R];
-        const bajo = (L.filter(i => i.pc === pcs[0]).sort((a, b) => a.midi - b.midi)[0]) || (all.filter(i => i.pc === pcs[0]).sort((a, b) => a.midi - b.midi)[0]);
-        if (!bajo)
-            return [];
-        const ids = [bajo.b.id];
-        pcs.slice(1).forEach(pc => { const c = all.filter(i => i.pc === pc && i.midi > bajo.midi && i.midi <= bajo.midi + 19).sort((a, b) => a.midi - b.midi); const el = c.find(i => L.includes(i)) || c[0]; if (el)
-            ids.push(el.b.id); });
-        return ids;
-    };
+    const armVoz = (pcs) => { const v = voicingsDe(pcs, [], leftBtns, rightBtns, bellows)[1]; return v && !v.vacio ? v.ids : []; }; // por defecto: la forma «cerrado» sugerida
     const armItems = (pcs) => armVoz(pcs).map(id => conBy[id]).filter(Boolean).map(b => itemsMano([b], bellows)[0]);
     const armTocar = (arp) => { const o = (vozSel ? vozItems({ fuelle: vozSel.fuelle, notas: vozSel.ids.map(id => ({ id })) }) : armItems(armSel.pcs)).sort((a, b) => a.midi - b.midi); o.forEach((it, i) => playBandDur(CHROMATIC[it.pc], it.oct, arp ? 0.38 : 1.8, arp ? i * 0.32 : i * 0.012)); };
     const armRecorrer = () => { armAcordes.forEach((a, k) => { armItems(a.pcs).sort((x, y) => x.midi - y.midi).forEach(it => playBandDur(CHROMATIC[it.pc], it.oct, 1.1, k * 1.25)); }); };
@@ -4629,9 +4660,12 @@ function EntrenadorTab({ preset } = {}) {
     // Cabecera de la vista de acordes: Ver y escuchar / Armar
     const acoVistas = (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" } },
         React.createElement("button", { style: uiPill(modo === "arpegio", { padding: "7px 16px" }), onClick: () => setModo("arpegio") }, "\uD83E\uDDED Ver y escuchar"),
-        React.createElement("button", { style: uiPill(modo === "construir", { padding: "7px 16px" }), onClick: () => setModo("construir") }, "\uD83C\uDFD7 Construir"),
         React.createElement("button", { style: uiPill(modo === "armonizar", { padding: "7px 16px" }), onClick: () => setModo("armonizar") }, "\uD83C\uDFB9 Armonizar"),
-        React.createElement("button", { style: uiPill(modo === "acordes", { padding: "7px 16px" }), onClick: () => setModo("acordes") }, "\uD83C\uDFBC Armar")));
+        React.createElement("button", { style: uiPill(modo === "construir" || modo === "acordes", { padding: "7px 16px" }), onClick: () => setModo(modo === "acordes" ? "acordes" : "construir") }, "\uD83C\uDFBC Armar acordes")));
+    // Dentro de «Armar acordes»: dos maneras de trabajar con el mismo teclado
+    const armarToggle = (React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" } },
+        React.createElement("span", { style: { ...uiLabel, fontSize: 9 } }, "C\u00F3mo quer\u00E9s armar"),
+        React.createElement("div", { style: { display: "flex", background: "#0e0e10", border: "1px solid #2f2f35", borderRadius: 8, padding: 2, gap: 2, flexWrap: "wrap" } }, [["construir", "Libre · toco y la app lo nombra"], ["acordes", "Ejercicio · me dan el acorde y lo marco"]].map(([m, l]) => (React.createElement("button", { key: m, style: uiVista(modo === m, { padding: "4px 12px" }), onClick: () => setModo(m) }, l))))));
     const scaleProps = modo === "armonizar" ? { stateOf: armStateOf } : modo === "construir" ? { stateOf: conStateOf } : modo === "lineas" ? { stateOf: linStateOf } : modo === "escalas" ? { stateOf: escStateOf } : modo === "notas" ? { stateOf: notaStateOf } : esCam ? { stateOf: camStateOf } : null;
     const tapBtn = (btn, rect) => modo === "armonizar" ? armTap(btn) : modo === "construir" ? conTap(btn) : modo === "lineas" ? linTap(btn) : modo === "acordes" ? toggleSel(btn) : modo === "escalas" ? escTap(btn, rect) : modo === "notas" ? setNotaPicker({ btn, rect }) : esCam ? camTap(btn) : openPicker(btn, rect);
     const painted = allButtons.filter(b => guesses[keyOf(b.id)]);
@@ -4814,34 +4848,7 @@ function EntrenadorTab({ preset } = {}) {
                     "Formas sugeridas \u00B7 ",
                     armSel.nombre),
                 vozSel && React.createElement("button", { style: uiGhost, onClick: () => setVozSel(null) }, "\u21BA Ver todas las notas")),
-            React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8 } }, armVoicings.map(v => {
-                const on = vozSel && v.ids && vozSel.ids.join() === v.ids.join();
-                return (React.createElement("div", { key: v.id, style: { flex: "1 1 220px", maxWidth: 340, padding: "9px 11px", borderRadius: 12, background: on ? "#1b1b20" : "#0e0e10", border: `1px solid ${on ? "#cfcfd4" : "#2c2c30"}` } },
-                    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 6, alignItems: "baseline" } },
-                        React.createElement("b", { style: { fontFamily: "'Libre Baskerville',serif", fontSize: 14, color: "#ececec" } }, v.nombre),
-                        v.fuelle && React.createElement("span", { style: { fontSize: 10, color: "#7c7c82" } },
-                            v.fuelle === "abre" ? "abriendo" : "cerrando",
-                            v.fuelle !== bellows ? " (cambia el fuelle)" : "")),
-                    React.createElement("div", { style: { fontSize: 10.5, color: "#8a8a90", margin: "2px 0 6px" } }, v.uso),
-                    v.vacio ? React.createElement("div", { style: { fontSize: 11.5, color: "#c9a25a" } }, "No hay botones para armarlo as\u00ED en este teclado.") : (React.createElement(React.Fragment, null,
-                        React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 } }, v.notas.map(n => {
-                            const col = nc(CHROMATIC[n.pc]);
-                            return (React.createElement("span", { key: n.id, style: { display: "inline-flex", alignItems: "center", gap: 4, padding: "1px 7px 1px 3px", borderRadius: 999, background: "#16161a", border: "1px solid #2c2c30", fontSize: 11.5, color: "#ececec" } },
-                                React.createElement("span", { style: { width: 16, height: 16, borderRadius: "50%", background: col, color: txtSobre(col), fontSize: 8.5, fontWeight: 800, fontFamily: "monospace", display: "inline-flex", alignItems: "center", justifyContent: "center" } }, ROL_TXT[n.rol]),
-                                React.createElement("span", { style: { fontFamily: "'Libre Baskerville',serif", fontWeight: 700 } },
-                                    n.nombre,
-                                    n.oct),
-                                React.createElement("span", { style: { fontSize: 9, color: "#6a6a70" } }, n.hand === "L" ? "izq" : "der")));
-                        })),
-                        React.createElement("div", { style: { fontSize: 10, color: "#6a6a70", marginBottom: 6 } },
-                            v.manos.L ? `${v.manos.L} en la izquierda` : "",
-                            v.manos.L && v.manos.R ? " · " : "",
-                            v.manos.R ? `${v.manos.R} en la derecha` : ""),
-                        React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } },
-                            React.createElement("button", { style: uiPlay(false, { padding: "3px 11px", fontSize: 11.5 }), onClick: () => tocarVoicing(v, false) }, "\u25B6"),
-                            React.createElement("button", { style: uiTool(on), onClick: () => { setArmPatron(v.id); verVoicing(v, v.nombre); } }, "Ver en el teclado"),
-                            React.createElement("button", { style: uiTool(false), onClick: () => guardarVoicing(v, armSel.nombre + " · " + v.nombre) }, "\u2605"))))));
-            })),
+            formasUI(armVoicings, { onVer: (v) => { setArmPatron(v.id); verVoicing(v, v.nombre); }, activoIds: vozSel && vozSel.ids, btnVer: "Ver en el teclado", guardar: (v) => guardarVoicing(v, armSel.nombre + " · " + v.nombre) }),
             React.createElement("details", { style: { marginTop: 10 }, onToggle: e => setArmMatriz(e.currentTarget.open) },
                 React.createElement("summary", { style: { cursor: "pointer", fontFamily: UI_FONT, fontSize: 12, fontWeight: 600, color: "#cfcfd4" } },
                     "Esta misma forma en las doce tonalidades (",
@@ -5031,6 +5038,7 @@ function EntrenadorTab({ preset } = {}) {
             const ejC = (k) => k.split(",").map(n => CROM_SIMPLE[CHROMATIC[Number(n) % 12]]).join(" · ");
             return (React.createElement("div", { className: "rounded-xl mb-3", style: { background: "#121212", border: "1px solid #2a2a2a", padding: "12px 14px" } },
                 acoVistas,
+                armarToggle,
                 React.createElement("p", { className: "text-xs text-gray-500", style: { margin: "0 0 12px" } }, "Toc\u00E1 los botones de cualquier mano para armar el acorde. La primera nota que marc\u00E1s es la ra\u00EDz; despu\u00E9s sum\u00E1 las que quieras, en cualquier orden, repetidas en otras octavas o con tensiones. Toc\u00E1 una nota marcada para sacarla."),
                 React.createElement("div", { style: { padding: "10px 12px", borderRadius: 12, background: "#0e0e10", border: "1px solid #26262a", marginBottom: 10 } },
                     React.createElement("p", { style: { ...uiLabel, margin: "0 0 4px" } }, "Acorde"),
@@ -5056,6 +5064,13 @@ function EntrenadorTab({ preset } = {}) {
                     React.createElement("button", { disabled: !orden.length, style: uiPlay(false, { padding: "7px 14px" }), onClick: () => conTocar(true) }, "\u25B6 Arpegio"),
                     React.createElement("button", { disabled: !orden.length, style: uiGhost, onClick: () => conIds.length && conQuitar(conIds[conIds.length - 1]) }, "\u21B6 Quitar la \u00FAltima"),
                     React.createElement("button", { disabled: !orden.length, style: { ...uiGhost, marginLeft: "auto" }, onClick: () => { setConSel(m => ({ ...m, [bellows]: [] })); setConRaiz(null); } }, "\u27F3 Limpiar")),
+                conVoicings && (React.createElement("div", { style: { marginTop: 12, paddingTop: 10, borderTop: "1px solid #232326" } },
+                    React.createElement("p", { style: { ...uiLabel, margin: "0 0 6px" } },
+                        "Formas sugeridas \u00B7 ",
+                        conAn.nombre),
+                    formasUI(conVoicings, { onVer: (v) => { setBellows(v.fuelle); setConSel(m => ({ ...m, [v.fuelle]: v.ids })); setConRaiz(null); tocarVoicing(v, false); }, activoIds: conIds, btnVer: "Usar esta forma", guardar: (v) => guardarVoicing(v, conAn.nombre + " · " + v.nombre) }),
+                    React.createElement("p", { style: { fontSize: 10.5, color: "#6a6a70", margin: "6px 0 0" } }, "Usan la ra\u00EDz, la 3\u00AA, la 5\u00AA y la 7\u00AA (si la tiene). Las dem\u00E1s notas las sum\u00E1s vos tocando el teclado."))),
+                conItems.length >= 3 && conAn && !conAn.intervalo && !conVoicings && React.createElement("p", { style: { fontSize: 11, color: "#7c7c82", margin: "10px 0 0" } }, "Para sugerir formas, el acorde necesita ra\u00EDz, 3\u00AA y 5\u00AA."),
                 React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 10 } },
                     React.createElement("input", { value: conNota, onChange: e => setConNota(e.target.value), placeholder: "Anotaci\u00F3n opcional (ej.: marcato, mano izquierda)", style: { ...inpS, flex: "1 1 220px", fontSize: 12, padding: "6px 8px" } }),
                     React.createElement("button", { disabled: orden.length < 2, style: uiTool(false, { padding: "6px 12px", opacity: orden.length < 2 ? 0.45 : 1 }), onClick: () => { cardGuardar(conAn ? conAn.nombre : "Acorde", conNota, conIds, bellows, conAn && conAn.nombres); setConNota(""); } }, "\u2605 Guardar en mis acordes")),
@@ -5156,6 +5171,7 @@ function EntrenadorTab({ preset } = {}) {
             React.createElement("div", { className: "flex gap-1.5 mt-2" }, [[false, "Solo la nota"], [true, "Nota y octava"]].map(([v, l]) => (React.createElement("button", { key: String(v), style: uiPill(pedirOct === v), onClick: () => setPedirOct(v) }, l)))))),
         modo === "acordes" && (React.createElement(React.Fragment, null,
             acoVistas,
+            armarToggle,
             React.createElement("p", { className: "text-xs text-gray-500 mb-2" }, "Arm\u00E1 el acorde (fundamental, tipo, s\u00E9ptima, extensiones) y marc\u00E1 en los teclados los botones que lo forman, con una mano o con las dos. Despu\u00E9s toc\u00E1 \"Corregir\". Pod\u00E9s ir sumando notas al acorde y seguir marcando."),
             React.createElement(ArmadorAcordes, { a: acorde, collapsible: false }))),
         React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10, alignItems: "center" } },
@@ -6426,6 +6442,268 @@ function ColoresTab() {
                 React.createElement("span", { style: { fontSize: 10.5, color: "#cfcfd4", fontFamily: "'Libre Baskerville',serif", fontWeight: 700 } }, NOMBRES_PC[pc].replace(" / ", "/")))))))));
 }
 // ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
+// ─── TEORÍA BÁSICA: nociones generales para llegar a escalas y acordes en el bandoneón ───
+const TEO_GRADOS_MAYOR = [["I", "Tónica"], ["II", "Supertónica"], ["III", "Mediante"], ["IV", "Subdominante"], ["V", "Dominante"], ["VI", "Superdominante"], ["VII", "Sensible"]];
+const TEO_GRADOS_MENOR = [["I", "Tónica"], ["II", "Supertónica"], ["III", "Mediante"], ["IV", "Subdominante"], ["V", "Dominante"], ["VI", "Superdominante"], ["VII", "Subtónica"]];
+// notas (nombres en inglés) ordenadas hacia arriba: la octava sube cuando la altura baja
+function teoAscender(pcs, base = 4) { let oct = base, prev = -1; return pcs.map(pc => { if (prev >= 0 && pc <= prev)
+    oct++; prev = pc; return { pc, oct }; }); }
+function useTeoSeq() {
+    const timers = useRef([]);
+    useEffect(() => () => timers.current.forEach(clearTimeout), []);
+    const parar = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+    const tras = (ms, fn) => { timers.current.push(setTimeout(fn, ms)); };
+    return { parar, tras };
+}
+const teoBox = { background: "#121214", border: "1px solid #26262a", borderRadius: 14, padding: "14px 16px", marginBottom: 12 };
+const teoP = { fontFamily: "'Crimson Text',Georgia,serif", fontSize: 17, lineHeight: 1.55, color: "#cfcfd4", margin: "0 0 10px" };
+function TeoNota({ pc, txt, sub, size = 40 }) {
+    const c = WCOL_TEO[pc];
+    return (React.createElement("div", { style: { display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 3 } },
+        React.createElement("div", { style: { width: size, height: size, borderRadius: "50%", background: c, border: "2px solid rgba(255,255,255,.3)", display: "flex", alignItems: "center", justifyContent: "center", color: txtSobre(c), fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: size * 0.34 } }, txt),
+        sub !== undefined && React.createElement("span", { style: { fontSize: 10, color: "#8a8a90", fontFamily: "monospace" } }, sub)));
+}
+const WCOL_TEO = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"].map(n => NC[n]);
+const FigSvg = ({ id, size = 44 }) => {
+    const hueco = id === "redonda" || id === "blanca", asta = id !== "redonda", flags = id === "corchea" ? 1 : id === "semicorchea" ? 2 : 0;
+    return (React.createElement("svg", { width: size, height: size, viewBox: "0 0 44 44" },
+        React.createElement("ellipse", { cx: "16", cy: "32", rx: "9", ry: "6.5", transform: "rotate(-20 16 32)", fill: hueco ? "none" : "#ececec", stroke: "#ececec", strokeWidth: "2.4" }),
+        asta && React.createElement("line", { x1: "24.6", y1: "29.5", x2: "24.6", y2: "6", stroke: "#ececec", strokeWidth: "2.4" }),
+        [...Array(flags)].map((_, i) => React.createElement("path", { key: i, d: `M24.6,${6 + i * 7} q10,5 6,16`, fill: "none", stroke: "#ececec", strokeWidth: "2.4" }))));
+};
+function TeoL1() {
+    const { parar, tras } = useTeoSeq();
+    const [vivo, setVivo] = useState(null); // {que, i}
+    const ritmo = () => { parar(); const d = [1, 1, .5, .5, 1], pulso = 0.62; let t = 0; d.forEach((x, i) => { tras(t * 1000, () => { playTone("C", 5, 0.12); setVivo({ que: "ritmo", i }); }); t += x * pulso; }); tras(t * 1000, () => setVivo(null)); };
+    const melodia = () => { parar(); const n = [0, 2, 4, 7, 4, 2, 0]; n.forEach((pc, i) => tras(i * 430, () => { playTone(CHROMATIC[pc], 4, 0.5); setVivo({ que: "melodia", i }); })); tras(n.length * 430, () => setVivo(null)); };
+    const armonia = () => { parar(); [[0, 4, 7], [5, 9, 0], [7, 11, 2]].forEach((ch, k) => tras(k * 1200, () => { setVivo({ que: "armonia", i: k }); teoAscender(ch, 4).forEach((x, j) => tras(0, () => playTone(CHROMATIC[x.pc], x.oct, 1.0))); })); tras(3600, () => setVivo(null)); };
+    const on = (q, i) => vivo && vivo.que === q && vivo.i === i;
+    const Card = ({ t, txt, f, children }) => (React.createElement("div", { style: { ...teoBox, flex: "1 1 190px", marginBottom: 0 } },
+        React.createElement("p", { style: { margin: "0 0 4px", fontFamily: "'Libre Baskerville',serif", fontWeight: 700, fontSize: 18, color: "#ececec" } }, t),
+        React.createElement("p", { style: { ...teoP, fontSize: 15, margin: "0 0 10px" } }, txt),
+        children,
+        React.createElement("div", { style: { marginTop: 10 } },
+            React.createElement("button", { style: uiPlay(false, { padding: "5px 14px" }), onClick: f }, "\u25B6 Escuchar"))));
+    return (React.createElement("div", null,
+        React.createElement("p", { style: teoP }, "La m\u00FAsica es el arte de combinar sonidos y silencios en el tiempo. Se apoya en tres elementos:"),
+        React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap" } },
+            React.createElement(Card, { t: "Ritmo", txt: "C\u00F3mo se ordenan los sonidos en el tiempo: pulso y duraciones.", f: ritmo },
+                React.createElement("div", { style: { display: "flex", gap: 4, alignItems: "flex-end", height: 46 } }, [1, 1, .5, .5, 1].map((d, i) => (React.createElement("div", { key: i, style: { width: d * 40, height: on("ritmo", i) ? 44 : 30, borderRadius: 6, background: on("ritmo", i) ? "#2dd4bf" : "#2e2e34", transition: "all .08s" } }))))),
+            React.createElement(Card, { t: "Melod\u00EDa", txt: "Sonidos de distinta altura, uno detr\u00E1s del otro.", f: melodia },
+                React.createElement("div", { style: { display: "flex", gap: 4 } }, [0, 2, 4, 7, 4, 2, 0].map((pc, i) => (React.createElement("div", { key: i, style: { width: 24, height: 24 + (on("melodia", i) ? 10 : 0) + [0, 1, 2, 4, 2, 1, 0][i] * 4, borderRadius: 7, background: WCOL_TEO[pc], opacity: on("melodia", i) ? 1 : .55, alignSelf: "flex-end", transition: "all .1s" } }))))),
+            React.createElement(Card, { t: "Armon\u00EDa", txt: "Sonidos al mismo tiempo: los acordes.", f: armonia },
+                React.createElement("div", { style: { display: "flex", gap: 10 } }, [[0, 4, 7], [5, 9, 0], [7, 11, 2]].map((ch, k) => (React.createElement("div", { key: k, style: { display: "flex", flexDirection: "column-reverse", gap: 3, opacity: on("armonia", k) ? 1 : .5, transition: "opacity .15s" } }, ch.map(pc => React.createElement("div", { key: pc, style: { width: 28, height: 14, borderRadius: 5, background: WCOL_TEO[pc] } })))))))),
+        React.createElement("p", { style: { ...teoP, marginTop: 14 } },
+            "Una canci\u00F3n usa los tres a la vez: el ",
+            React.createElement("b", { style: { color: "#ececec" } }, "ritmo"),
+            " la hace avanzar, la ",
+            React.createElement("b", { style: { color: "#ececec" } }, "melod\u00EDa"),
+            " es lo que se canta, y la ",
+            React.createElement("b", { style: { color: "#ececec" } }, "armon\u00EDa"),
+            " la acompa\u00F1a.")));
+}
+function TeoL2() {
+    const { parar, tras } = useTeoSeq();
+    const [bpm, setBpm] = useState(80);
+    const [sono, setSono] = useState(null);
+    const FIG = [["redonda", "Redonda", 4, "4 pulsos"], ["blanca", "Blanca", 2, "2 pulsos"], ["negra", "Negra", 1, "1 pulso"], ["corchea", "Corchea", .5, "medio pulso"], ["semicorchea", "Semicorchea", .25, "un cuarto de pulso"]];
+    const tocar = (id, p) => { parar(); const pul = 60 / bpm, cuantas = Math.round(4 / p); setSono(id); for (let i = 0; i < cuantas; i++)
+        tras(i * p * pul * 1000, () => playTone("C", i % (cuantas / Math.min(cuantas, 4) || 1) === 0 ? 5 : 4, Math.min(p * pul * 0.9, 1.6))); tras(4 * pul * 1000 + 200, () => setSono(null)); };
+    return (React.createElement("div", null,
+        React.createElement("p", { style: teoP },
+            "Cada figura indica cu\u00E1nto dura un sonido. Se mide en ",
+            React.createElement("b", { style: { color: "#ececec" } }, "pulsos"),
+            ": el latido regular que sent\u00EDs cuando marc\u00E1s el paso. Tomando la negra como un pulso:"),
+        React.createElement("div", { style: teoBox }, FIG.map(([id, nom, p, txt]) => (React.createElement("div", { key: id, style: { display: "flex", alignItems: "center", gap: 12, padding: "7px 0", borderTop: id === "redonda" ? "none" : "1px solid #1c1c1f", flexWrap: "wrap" } },
+            React.createElement(FigSvg, { id: id }),
+            React.createElement("div", { style: { width: 130 } },
+                React.createElement("b", { style: { color: "#ececec", fontFamily: "'Libre Baskerville',serif" } }, nom),
+                React.createElement("div", { style: { fontSize: 12, color: "#8a8a90" } },
+                    "dura ",
+                    txt)),
+            React.createElement("div", { style: { flex: "1 1 120px", height: 14, background: "#1b1b20", borderRadius: 7, overflow: "hidden" } },
+                React.createElement("div", { style: { width: `${p / 4 * 100}%`, height: "100%", background: sono === id ? "#2dd4bf" : "#5a5a64", borderRadius: 7, transition: "background .15s" } })),
+            React.createElement("button", { style: uiPlay(false, { padding: "4px 12px", fontSize: 11.5 }), onClick: () => tocar(id, p) }, "\u25B6 Un comp\u00E1s"))))),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, margin: "0 0 12px", flexWrap: "wrap" } },
+            React.createElement("span", { style: { ...uiLabel, fontSize: 10 } }, "Velocidad"),
+            React.createElement("input", { type: "range", min: "50", max: "140", value: bpm, onChange: e => setBpm(+e.target.value), style: { width: 180 } }),
+            React.createElement("span", { style: { fontFamily: "monospace", color: "#ececec" } },
+                "\u2669 = ",
+                bpm)),
+        React.createElement("p", { style: teoP },
+            "Los pulsos se agrupan en ",
+            React.createElement("b", { style: { color: "#ececec" } }, "compases"),
+            ". En un comp\u00E1s de 4/4 caben cuatro negras, o dos blancas, o una redonda. Cada figura tiene tambi\u00E9n su ",
+            React.createElement("b", { style: { color: "#ececec" } }, "silencio"),
+            ": dura lo mismo, pero no suena.")));
+}
+function TeoL3() {
+    const [a, setA] = useState(null);
+    const [b, setB] = useState(null);
+    const pick = (pc) => { playTone(CHROMATIC[pc], 4, 0.6); if (a === null || b !== null) {
+        setA(pc);
+        setB(null);
+    }
+    else
+        setB(pc); };
+    const d = a !== null && b !== null ? ((b - a + 12) % 12) : null;
+    const NOMD = ["la misma nota", "1 semitono", "1 tono", "1 tono y 1 semitono", "2 tonos", "2 tonos y 1 semitono", "3 tonos (tritono)", "3 tonos y 1 semitono", "4 tonos menos 1 semitono", "4 tonos", "5 tonos menos 1 semitono", "5 tonos y 1 semitono"];
+    return (React.createElement("div", null,
+        React.createElement("p", { style: teoP },
+            "Hay ",
+            React.createElement("b", { style: { color: "#ececec" } }, "doce sonidos"),
+            " distintos antes de que todo se repita una octava m\u00E1s arriba. La distancia m\u00E1s chica entre dos de ellos es el ",
+            React.createElement("b", { style: { color: "#ececec" } }, "semitono"),
+            "; dos semitonos forman un ",
+            React.createElement("b", { style: { color: "#ececec" } }, "tono"),
+            "."),
+        React.createElement("div", { style: teoBox },
+            React.createElement("div", { style: { display: "flex", gap: 4 } }, CHROMATIC.map((n, pc) => {
+                const sel = pc === a || pc === b;
+                return (React.createElement("div", { key: n, onClick: () => pick(pc), style: { flex: 1, minWidth: 0, cursor: "pointer", textAlign: "center" } },
+                    React.createElement("div", { style: { height: 44, borderRadius: 8, background: WCOL_TEO[pc], border: sel ? "3px solid #fff" : "1px solid rgba(255,255,255,.2)", boxShadow: sel ? "0 0 12px rgba(255,255,255,.35)" : "none" } }),
+                    React.createElement("div", { style: { fontSize: 10, color: "#bdbdc6", fontFamily: "serif", marginTop: 3, whiteSpace: "nowrap" } }, nombreLat(n))));
+            })),
+            React.createElement("p", { style: { ...teoP, fontSize: 15, margin: "12px 0 0", minHeight: 24 } }, a === null ? "Tocá una nota y después otra para medir la distancia entre las dos." : b === null ? `Elegiste ${nombreLat(CHROMATIC[a])}. Ahora tocá otra.` : `De ${nombreLat(CHROMATIC[a])} a ${nombreLat(CHROMATIC[b])} (subiendo) hay ${NOMD[d]}.`)),
+        React.createElement("p", { style: teoP },
+            "Un ",
+            React.createElement("b", { style: { color: "#ececec" } }, "sostenido"),
+            " (\u266F) sube la nota un semitono y un ",
+            React.createElement("b", { style: { color: "#ececec" } }, "bemol"),
+            " (\u266D) la baja un semitono. Por eso Do\u266F y Re\u266D son el mismo sonido con dos nombres: a eso se le llama ",
+            React.createElement("i", null, "enarmon\u00EDa"),
+            ". Entre Mi y Fa, y entre Si y Do, no hay nota en el medio: son semitonos naturales.")));
+}
+function TeoL4() {
+    const { parar, tras } = useTeoSeq();
+    const [menor, setMenor] = useState(false);
+    const [tn, setTn] = useState("C");
+    const [vivo, setVivo] = useState(-1);
+    const lista = menor ? TONICAS_MENOR : TONICAS_MAYOR, ton = lista.includes(tn) ? tn : lista[noteIdx(tn)];
+    const ivs = menor ? [0, 2, 3, 5, 7, 8, 10] : [0, 2, 4, 5, 7, 9, 11], notas = buildScale(ton, ivs), pcs = notas.map(noteIdx), gr = menor ? TEO_GRADOS_MENOR : TEO_GRADOS_MAYOR;
+    const pasos = ivs.map((x, i) => { var _a; return (((_a = ivs[i + 1]) !== null && _a !== void 0 ? _a : 12) - x) === 2 ? "T" : "S"; });
+    const escuchar = () => { parar(); const arr = teoAscender([...pcs, pcs[0]], 4); arr.forEach((x, i) => tras(i * 420, () => { playTone(CHROMATIC[x.pc], x.oct, 0.5); setVivo(i); })); tras(arr.length * 420, () => setVivo(-1)); };
+    return (React.createElement("div", null,
+        React.createElement("p", { style: teoP },
+            "Una ",
+            React.createElement("b", { style: { color: "#ececec" } }, "escala"),
+            " es una serie ordenada de notas. Cada una es un ",
+            React.createElement("b", { style: { color: "#ececec" } }, "grado"),
+            " y se nombra con un n\u00FAmero romano; el primero es la ",
+            React.createElement("b", { style: { color: "#ececec" } }, "t\u00F3nica"),
+            ", la nota donde la escala \u00ABdescansa\u00BB."),
+        React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 10 } },
+            React.createElement("div", { style: { display: "flex", background: "#0e0e10", border: "1px solid #2f2f35", borderRadius: 8, padding: 2, gap: 2 } }, [[false, "Mayor"], [true, "Menor natural"]].map(([v, l]) => (React.createElement("button", { key: l, style: uiVista(menor === v, { padding: "4px 12px" }), onClick: () => setMenor(v) }, l)))),
+            React.createElement(Desplegable, { ancho: 90, etiqueta: "T\u00F3nica", valor: ton, opciones: lista.map(x => [x, nombreLat(x)]), onChange: setTn }),
+            React.createElement("button", { style: uiPlay(false, { padding: "6px 16px" }), onClick: escuchar }, "\u25B6 Escuchar la escala")),
+        React.createElement("div", { style: { ...teoBox, overflowX: "auto" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 0, minWidth: 560 } }, [...notas, notas[0]].map((n, i) => (React.createElement("div", { key: i, style: { display: "flex", alignItems: "flex-start" } },
+                React.createElement("div", { style: { textAlign: "center", width: 56, opacity: vivo < 0 || vivo === i ? 1 : .45, transition: "opacity .1s" } },
+                    React.createElement(TeoNota, { pc: pcs[i % 7], txt: nombreLat(n), size: 48 }),
+                    React.createElement("div", { style: { fontFamily: "monospace", fontWeight: 800, color: "#ececec", fontSize: 13, marginTop: 4 } }, i === 7 ? "I" : gr[i][0]),
+                    React.createElement("div", { style: { fontSize: 10, color: "#8a8a90" } }, i === 7 ? "octava" : gr[i][1])),
+                i < 7 && React.createElement("div", { style: { width: 20, height: 48, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, fontFamily: "monospace", color: pasos[i] === "S" ? "#f2c14e" : "#9a9aa2" } }, pasos[i])))))),
+        React.createElement("p", { style: teoP },
+            "La f\u00F3rmula de la escala ",
+            React.createElement("b", { style: { color: "#ececec" } }, "mayor"),
+            " es siempre la misma: ",
+            React.createElement("b", { style: { color: "#ececec" } }, "T T S T T T S"),
+            " (tono, tono, semitono\u2026). La ",
+            React.createElement("b", { style: { color: "#ececec" } }, "menor natural"),
+            " es ",
+            React.createElement("b", { style: { color: "#ececec" } }, "T S T T S T T"),
+            ". Cambiando la t\u00F3nica, la f\u00F3rmula se traslada a cualquier tonalidad.")));
+}
+function TeoL5({ irA }) {
+    const { parar, tras } = useTeoSeq();
+    const [raiz, setRaiz] = useState("C");
+    const tocarPcs = (pcs, arp) => { parar(); teoAscender(pcs, 3).forEach((x, i) => tras(arp ? i * 380 : i * 15, () => playTone(CHROMATIC[x.pc], x.oct, arp ? 0.6 : 1.4))); };
+    const tipos = [["", "Mayor", "3ª mayor + 5ª justa"], ["m", "Menor", "3ª menor + 5ª justa"], ["maj7", "Mayor con 7ª mayor (△7)", "tríada mayor + 7ª mayor"], ["7", "Dominante (7)", "tríada mayor + 7ª menor"]];
+    const dia = acordesDiatonicos(raiz, "mayor");
+    const ROLES = ["Raíz", "3ª", "5ª", "7ª"];
+    return (React.createElement("div", null,
+        React.createElement("p", { style: teoP },
+            "Un ",
+            React.createElement("b", { style: { color: "#ececec" } }, "acorde"),
+            " son tres o m\u00E1s notas sonando juntas. Se arman ",
+            React.createElement("b", { style: { color: "#ececec" } }, "apilando terceras"),
+            ": part\u00EDs de una nota (la ",
+            React.createElement("b", { style: { color: "#ececec" } }, "ra\u00EDz"),
+            "), salt\u00E1s una nota de la escala y tom\u00E1s la siguiente, y repet\u00EDs. Con tres notas es una ",
+            React.createElement("b", { style: { color: "#ececec" } }, "tr\u00EDada"),
+            ": ra\u00EDz, 3\u00AA y 5\u00AA."),
+        React.createElement("div", { style: { marginBottom: 10 } },
+            React.createElement(Desplegable, { ancho: 90, etiqueta: "Ra\u00EDz", valor: raiz, opciones: TONICAS_MAYOR.map(x => [x, nombreLat(x)]), onChange: setRaiz })),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 10, marginBottom: 12 } }, tipos.map(([suf, nom, regla]) => {
+            const ch = parseChord(raiz + suf);
+            if (!ch)
+                return null;
+            const pcs = ch.notes.map(noteIdx);
+            return (React.createElement("div", { key: suf || "M", style: { ...teoBox, marginBottom: 0 } },
+                React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 6 } },
+                    React.createElement("b", { style: { fontFamily: "'Libre Baskerville',serif", color: "#ececec", fontSize: 16 } },
+                        nombreLat(raiz),
+                        " ",
+                        ({ "": "mayor", m: "menor", maj7: "△7", "7": "7" })[suf])),
+                React.createElement("div", { style: { fontSize: 11.5, color: "#8a8a90", margin: "2px 0 10px" } },
+                    nom,
+                    " \u00B7 ",
+                    regla),
+                React.createElement("div", { style: { display: "flex", flexDirection: "column-reverse", gap: 6 } }, ch.notes.map((n, i) => (React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 10 } },
+                    React.createElement(TeoNota, { pc: pcs[i], txt: nombreLat(n), size: 34 }),
+                    React.createElement("span", { style: { fontSize: 12, color: "#9a9aa2" } }, ROLES[i]))))),
+                React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 10 } },
+                    React.createElement("button", { style: uiPlay(false, { padding: "4px 12px", fontSize: 11.5 }), onClick: () => tocarPcs(pcs, false) }, "\u25B6 Juntas"),
+                    React.createElement("button", { style: uiPlay(false, { padding: "4px 12px", fontSize: 11.5 }), onClick: () => tocarPcs(pcs, true) }, "\u25B6 Una por una"))));
+        })),
+        React.createElement("p", { style: teoP },
+            "Si apil\u00E1s terceras sobre ",
+            React.createElement("b", { style: { color: "#ececec" } }, "cada grado de una escala"),
+            ", obten\u00E9s un acorde por grado. En ",
+            nombreLat(raiz),
+            " mayor son:"),
+        React.createElement("div", { style: { ...teoBox, display: "flex", gap: 8, flexWrap: "wrap" } }, dia.map(d => (React.createElement("button", { key: d.i, onClick: () => tocarPcs(d.pcs.slice(0, 3), false), style: { minWidth: 78, padding: "6px 8px 7px", borderRadius: 10, cursor: "pointer", textAlign: "center", background: "#0e0e10", border: "1px solid #2c2c30", borderTop: `4px solid ${WCOL_TEO[d.pc]}`, color: "#ececec" } },
+            React.createElement("div", { style: { fontSize: 10, fontFamily: "monospace", color: "#9a9aa2", fontWeight: 700 } }, romTri(d.i, d.tq)),
+            React.createElement("div", { style: { fontSize: 12.5, fontWeight: 700, fontFamily: "'Libre Baskerville',serif" } }, nombreAcordeEs(d.raiz, d.tq)))))),
+        React.createElement("p", { style: { ...teoP, fontSize: 15 } },
+            "Toc\u00E1 cada uno para escucharlo. May\u00FAscula = acorde mayor, min\u00FAscula = menor, \u00B0 = disminuido. Para verlos en el teclado, and\u00E1 a ",
+            React.createElement("b", { style: { color: "#ececec" } }, "Entrenador \u2192 Acordes \u2192 Armonizar"),
+            ".")));
+}
+function TeoL6({ irA }) {
+    const GL = [["Pulso", "El latido regular de la música."], ["Compás", "Agrupación de pulsos; en 4/4 caben cuatro negras."], ["Figura", "Símbolo que indica cuánto dura un sonido."], ["Semitono", "La distancia más chica entre dos notas."], ["Tono", "Dos semitonos."], ["Escala", "Serie ordenada de notas con una fórmula de tonos y semitonos."], ["Grado", "Cada nota de la escala, con su número romano."], ["Tónica", "El primer grado: la nota de reposo."], ["Acorde", "Tres o más notas sonando juntas."], ["Tríada", "Acorde de tres notas: raíz, 3ª y 5ª."], ["Raíz", "La nota sobre la que se arma el acorde."], ["Enarmonía", "Dos nombres para el mismo sonido (Do♯ y Re♭)."]];
+    return (React.createElement("div", null,
+        React.createElement("p", { style: teoP }, "Con estas nociones ya pod\u00E9s entrar a las escalas y los acordes en el bandone\u00F3n."),
+        React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 } },
+            React.createElement("button", { style: uiPill(true, { padding: "9px 18px" }), onClick: () => irA("bandoneon") }, "\u266C El mapa del bandone\u00F3n"),
+            React.createElement("button", { style: uiPill(false, { padding: "9px 18px" }), onClick: () => irA("entrenador") }, "\u25CE Entrenador: escalas y acordes")),
+        React.createElement("div", { style: teoBox },
+            React.createElement("p", { style: { ...uiLabel, margin: "0 0 8px" } }, "Glosario"),
+            GL.map(([t, d], i) => (React.createElement("div", { key: t, style: { display: "flex", gap: 12, padding: "6px 0", borderTop: i ? "1px solid #1c1c1f" : "none", flexWrap: "wrap" } },
+                React.createElement("b", { style: { minWidth: 96, color: "#ececec", fontFamily: "'Libre Baskerville',serif" } }, t),
+                React.createElement("span", { style: { flex: "1 1 220px", color: "#b4b4bc", fontSize: 14 } }, d)))))));
+}
+function TeoriaTab({ irA }) {
+    const [lec, setLec] = useState(0);
+    const LEC = [["Qué es la música", React.createElement(TeoL1, null)], ["Figuras y valores", React.createElement(TeoL2, null)], ["Las notas", React.createElement(TeoL3, null)], ["Cómo se forma una escala", React.createElement(TeoL4, null)], ["Cómo se forma un acorde", React.createElement(TeoL5, { irA: irA })], ["Ahora, en el bandoneón", React.createElement(TeoL6, { irA: irA })]];
+    return (React.createElement("div", null,
+        React.createElement("div", { style: { marginBottom: 12 } },
+            React.createElement("h2", { style: { margin: 0, fontFamily: "'Libre Baskerville',serif", fontSize: 22, fontWeight: 700, color: "#ececec" } }, "\uD83D\uDCDA Teor\u00EDa b\u00E1sica"),
+            React.createElement("p", { style: { margin: "4px 0 0", fontSize: 12, color: "#8a8a90" } }, "Nociones generales, para llegar a las escalas y los acordes. Tu profesor las ampl\u00EDa.")),
+        React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 } }, LEC.map(([t], i) => (React.createElement("button", { key: t, style: uiPill(lec === i, { padding: "6px 12px", fontSize: 12 }), onClick: () => setLec(i) },
+            i + 1,
+            " \u00B7 ",
+            t)))),
+        React.createElement("div", { key: lec },
+            React.createElement("h3", { style: { margin: "0 0 10px", fontFamily: "'Libre Baskerville',serif", fontSize: 19, color: "#ececec" } },
+                lec + 1,
+                ". ",
+                LEC[lec][0]),
+            LEC[lec][1]),
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginTop: 10 } },
+            React.createElement("button", { disabled: lec === 0, style: { ...uiPill(false, { padding: "7px 16px" }), opacity: lec === 0 ? .4 : 1 }, onClick: () => setLec(l => Math.max(0, l - 1)) }, "\u2190 Anterior"),
+            React.createElement("button", { disabled: lec === LEC.length - 1, style: { ...uiPill(true, { padding: "7px 18px" }), opacity: lec === LEC.length - 1 ? .4 : 1 }, onClick: () => setLec(l => Math.min(LEC.length - 1, l + 1)) }, "Siguiente \u2192"))));
+}
 // ─── Aviso inicial: alcance de la plataforma y papel del profesor ───
 const AVISO_VISTAS_SIN_OPCION = 3; // las primeras veces no se puede ocultar; después aparece "No mostrar más"
 function AvisoInicial({ n, manual, onClose, onNunca }) {
@@ -6515,6 +6793,7 @@ function HarmoniaApp() {
     const [preset, setPreset] = useState(null);
     const ESTUDIO = [
         { id: "codigo", label: "El Código", icon: "◐" },
+        { id: "teoria", label: "Teoría", icon: "♩" },
         { id: "bandoneon", label: "Bandoneón", icon: "♬" },
         { id: "entrenador", label: "Entrenador", icon: "◎" },
         window.__ALUMNO ? { id: "tareas", label: "Mis tareas", icon: "✎" } : { id: "organizador", label: "Organizador", icon: "▦" },
@@ -6583,6 +6862,7 @@ function HarmoniaApp() {
             React.createElement("div", { className: "flex-1 overflow-y-auto" },
                 React.createElement("div", { className: `${(tab === "bandoneon" || tab === "entrenador") ? "max-w-[1700px]" : tab === "codigo" ? "max-w-3xl" : (tab === "organizador" || tab === "tareas") ? "max-w-4xl" : "max-w-2xl"} mx-auto ${(tab === "bandoneon" || tab === "entrenador") ? "px-2 py-4 md:px-5 md:py-6" : "px-3 py-4 md:px-8 md:py-8"}` },
                     tab === "codigo" && React.createElement(ElCodigoTab, { irA: setTab }),
+                    tab === "teoria" && React.createElement(TeoriaTab, { irA: setTab }),
                     tab === "chord" && (React.createElement("div", { className: "space-y-5 stagger" },
                         React.createElement("div", { className: "flex gap-2" },
                             React.createElement("input", { value: chordInput, onChange: e => setChordInput(e.target.value), onKeyDown: e => e.key === "Enter" && analyzeChord(), placeholder: "Ej: Dm7, G7, Cmaj7, Am7b5, Bb7alt\u2026", className: "glow-input flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-lg text-gray-100", style: { fontFamily: "monospace" } }),
